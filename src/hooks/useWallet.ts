@@ -70,7 +70,7 @@ export function useWallet(): UseWalletSyncReturn {
 
   return {
     account: effectiveAccount,
-    status: effectiveStatus,
+    status: ctx.isSwitching ? "reconnecting" : remoteState.status || ctx.status,
     chainId: remoteState.chainId,
     isSwitching: ctx.isSwitching,
     provider: ctx.provider,
