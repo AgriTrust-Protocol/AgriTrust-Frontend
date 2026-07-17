@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { OfflineBanner } from "@/src/components/layout/OfflineBanner";
+import { CapacityNotice } from "@/src/components/resilience/CapacityNotice";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,8 +45,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {/* Offline status banner — renders above all content when offline */}
-        <OfflineBanner />
-        <Providers>{children}</Providers>
+        <Providers>
+          <OfflineBanner />
+          <CapacityNotice />
+          {children}
+        </Providers>
       </body>
     </html>
   );
