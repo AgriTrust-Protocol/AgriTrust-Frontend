@@ -1,0 +1,17 @@
+groups:
+  - name: agritrust-frontend-tracing
+    rules:
+      - alert: FrontendTraceExportFailure
+        expr: sum(rate(otelcol_exporter_send_failed_spans_total{service_name="agritrust-frontend"}[10m])) > 1
+        for: 15m
+        labels: { severity: warning, service: agritrust-frontend }
+        annotations:
+          summary: Browser trace exports are failing
+          runbook_url: docs/observability/runbook.md#trace-export-failure
+      - alert: CriticalPathP99LatencyBudgetExceeded
+        expr: histogram_quantile(0.99, sum by (le, http_route) (rate(traces_spanmetrics_latency_bucket{service_name="agritrust-frontend"}[5m]))) > 0.1
+        for: 10m
+        labels: { severity: critical, service: agritrust-frontend }
+        annotations:
+          summary: Critical path P99 exceeds 100ms
+          runbook_url: docs/observability/runbook.md#critical-path-latency
