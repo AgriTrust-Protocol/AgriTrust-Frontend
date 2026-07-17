@@ -12,6 +12,7 @@ import { ResilienceProvider, useResilience } from "@/src/components/resilience/R
 
 function ResilienceBootstrap({ children }: { children: ReactNode }) {
   const { isEnabled } = useResilience();
+import { TracingProvider } from "@/src/services/observability/TracingProvider";
 
   useEffect(() => {
     // These non-critical warmups are the first work removed under load.

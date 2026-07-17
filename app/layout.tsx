@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { OfflineBanner } from "@/src/components/layout/OfflineBanner";
 import { CapacityNotice } from "@/src/components/resilience/CapacityNotice";
+import { WebVitalsReporter } from "@/lib/webVitals";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,6 +48,7 @@ export default function RootLayout({
         {/* Offline status banner — renders above all content when offline */}
         <Providers>
           <OfflineBanner />
+          <WebVitalsReporter />
           <CapacityNotice />
           {children}
         </Providers>

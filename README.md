@@ -32,3 +32,10 @@ npm run dev
 
 ## 🤝 Contributing
 Contributions are highly welcome. Please ensure your commits are cryptographically signed using GPG or SSH keys. For major structural changes, please open an issue first to discuss your proposal.
+
+## Service mesh deployment
+
+The production deployment uses Istio mutual TLS, identity-based authorization,
+canary/blue-green routing, and Prometheus/Grafana observability. See the
+[architecture](docs/architecture/service-mesh-mtls.md) and
+[operations runbook](docs/runbooks/service-mesh.md) before applying manifests.
