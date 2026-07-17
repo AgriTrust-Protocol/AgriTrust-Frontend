@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: agritrust-frontend-slo
+  namespace: agritrust
+  labels: { release: prometheus }
+spec:
+  groups:
+    - name: agritrust-frontend
+      rules:
+        - alert: AgriTrustFrontendHighErrorRate
+          expr: |
+            sum(rate(istio_requests_total{destination_service_name="agritrust-frontend",response_code=~"5.."}[5m]))
+            / clamp_min(sum(rate(istio_requests_total{destination_service_name="agritrust-frontend"}[5m])), 1) > 0.01
+          for: 5m
+          labels: { severity: page, service: agritrust-frontend }
+          annotations:
+            summary: "AgriTrust frontend 5xx rate exceeds 1%"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/service-mesh.md"
+        - alert: AgriTrustFrontendLatencyBudgetBurn
+          expr: |
+            histogram_quantile(0.99, sum by (le) (rate(istio_request_duration_milliseconds_bucket{destination_service_name="agritrust-frontend"}[5m]))) > 100
+          for: 10m
+          labels: { severity: page, service: agritrust-frontend }
+          annotations:
+            summary: "AgriTrust frontend P99 latency exceeds 100ms"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/service-mesh.md"
+        - alert: AgriTrustFrontendNoReadyPods
+          expr: kube_deployment_status_replicas_available{namespace="agritrust",deployment=~"agritrust-frontend-(stable|canary)"} < 1
+          for: 2m
+          labels: { severity: page, service: agritrust-frontend }
+          annotations:
+            summary: "An AgriTrust frontend track has no ready pods"
