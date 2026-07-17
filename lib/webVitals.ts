@@ -12,6 +12,8 @@ export function WebVitalsReporter() {
       rating: metric.rating,
       delta: metric.delta,
       id: metric.id,
+      path: window.location.pathname,
+      timestamp: Date.now(),
     };
 
     if (metric.attribution) {
@@ -22,6 +24,7 @@ export function WebVitalsReporter() {
     if (url) {
       fetch(url, {
         method: "POST",
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
         keepalive: true,
       }).catch(() => {});
