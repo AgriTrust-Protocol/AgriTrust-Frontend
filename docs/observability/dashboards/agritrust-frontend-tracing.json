@@ -1,0 +1,9 @@
+{
+  "title": "AgriTrust Frontend Tracing",
+  "schemaVersion": 39,
+  "panels": [
+    { "title": "Critical path P99 (ms)", "type": "timeseries", "targets": [{ "expr": "1000 * histogram_quantile(0.99, sum by (le) (rate(traces_spanmetrics_latency_bucket{service_name=\"agritrust-frontend\"}[5m])))" }] },
+    { "title": "HTTP error rate", "type": "timeseries", "targets": [{ "expr": "sum(rate(traces_spanmetrics_calls_total{service_name=\"agritrust-frontend\",status_code=\"STATUS_CODE_ERROR\"}[5m])) / clamp_min(sum(rate(traces_spanmetrics_calls_total{service_name=\"agritrust-frontend\"}[5m])), 1)" }] },
+    { "title": "Trace export failures", "type": "stat", "targets": [{ "expr": "sum(rate(otelcol_exporter_send_failed_spans_total{service_name=\"agritrust-frontend\"}[5m]))" }] }
+  ]
+}

@@ -5,6 +5,8 @@
  * simultaneous 401 responses without duplicate refresh calls.
  */
 
+import { parseRetryAfter, TenantTokenBucketLimiter } from "./tenantRateLimiter";
+
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 interface ApiRequestOptions {
@@ -46,6 +48,8 @@ interface RefreshResponse {
 // ─── Token management ────────────────────────────────────────────────
 
 let accessToken: string | null = null;
+let activeTenantKey = "anonymous";
+const tenantRateLimiter = new TenantTokenBucketLimiter();
 
 export function getAccessToken(): string | null {
   return accessToken;
@@ -53,6 +57,15 @@ export function getAccessToken(): string | null {
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
+}
+
+/**
+ * Sets the local bucket partition after the authenticated session has resolved.
+ * This value is deliberately never sent as a request header: the gateway must
+ * derive tenant identity from verified credentials, not browser input.
+ */
+export function setActiveTenantKey(tenantKey: string | null): void {
+  activeTenantKey = tenantKey?.trim() || "anonymous";
 }
 
 // ─── Token refresh queue ─────────────────────────────────────────────
@@ -84,6 +97,7 @@ function subscribeToRefresh(): Promise<string | null> {
 
 async function refreshToken(): Promise<string | null> {
   try {
+    await tenantRateLimiter.acquire(activeTenantKey);
     const response = await fetch("/api/v1/auth/refresh", {
       method: "POST",
       credentials: "include",
@@ -91,6 +105,16 @@ async function refreshToken(): Promise<string | null> {
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        const retryAfterMs = parseRetryAfter(response.headers.get("Retry-After"));
+        if (retryAfterMs !== null) tenantRateLimiter.block(activeTenantKey, retryAfterMs);
+        throw new ApiRateLimitError(
+          "Rate limit exceeded",
+          retryAfterMs,
+          response.headers.get("X-RateLimit-Limit"),
+          response.headers.get("X-RateLimit-Remaining")
+        );
+      }
       throw new Error(`Refresh failed with status ${response.status}`);
     }
 
@@ -124,6 +148,8 @@ async function doFetch<T = unknown>(
   if (accessToken) {
     requestHeaders["Authorization"] = `Bearer ${accessToken}`;
   }
+
+  await tenantRateLimiter.acquire(activeTenantKey);
 
   const response = await fetch(url, {
     method,
@@ -160,6 +186,10 @@ async function doFetch<T = unknown>(
             return undefined as T;
           }
 
+          if (!retryResponse.ok) {
+            throw await apiErrorFromResponse(retryResponse);
+          }
+
           return (await retryResponse.json()) as T;
         }
       } catch (error) {
@@ -194,6 +224,10 @@ async function doFetch<T = unknown>(
           return undefined as T;
         }
 
+        if (!retryResponse.ok) {
+          throw await apiErrorFromResponse(retryResponse);
+        }
+
         return (await retryResponse.json()) as T;
       }
     }
@@ -204,15 +238,7 @@ async function doFetch<T = unknown>(
 
   // Non-401 error responses
   if (!response.ok) {
-    let errorMessage = `HTTP ${response.status}`;
-    try {
-      const errorBody = await response.json();
-      errorMessage =
-        (errorBody as { message?: string }).message ?? errorMessage;
-    } catch {
-      // Response body is empty or not valid JSON — use default message
-    }
-    throw new ApiError(errorMessage, response.status);
+    throw await apiErrorFromResponse(response);
   }
 
   // No content
@@ -297,6 +323,54 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
   }
+}
+
+/** A 429 response, including standardized rate-limit metadata when supplied. */
+export class ApiRateLimitError extends ApiError {
+  retryAfterMs: number | null;
+  limit: number | null;
+  remaining: number | null;
+
+  constructor(
+    message: string,
+    retryAfterMs: number | null,
+    limit: string | null,
+    remaining: string | null
+  ) {
+    super(message, 429);
+    this.name = "ApiRateLimitError";
+    this.retryAfterMs = retryAfterMs;
+    this.limit = parseHeaderNumber(limit);
+    this.remaining = parseHeaderNumber(remaining);
+  }
+}
+
+function parseHeaderNumber(value: string | null): number | null {
+  if (value === null) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function apiErrorFromResponse(response: Response): Promise<ApiError> {
+  if (response.status === 429) {
+    const retryAfterMs = parseRetryAfter(response.headers.get("Retry-After"));
+    if (retryAfterMs !== null) tenantRateLimiter.block(activeTenantKey, retryAfterMs);
+    return new ApiRateLimitError(
+      "Rate limit exceeded",
+      retryAfterMs,
+      response.headers.get("X-RateLimit-Limit"),
+      response.headers.get("X-RateLimit-Remaining")
+    );
+  }
+
+  let errorMessage = `HTTP ${response.status}`;
+  try {
+    const errorBody = await response.json();
+    errorMessage = (errorBody as { message?: string }).message ?? errorMessage;
+  } catch {
+    // Response body is empty or not valid JSON — use default message.
+  }
+  return new ApiError(errorMessage, response.status);
 }
 
 // ─── Re-exports ──────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { InternationalizedText } from "@/src/components/common/InternationalizedText";
+import { WeatherPlanner } from "@/src/components/dashboard/WeatherPlanner";
 
 export default function DashboardPage() {
   return (
@@ -34,6 +35,7 @@ export default function DashboardPage() {
           <p className="text-3xl font-bold">--</p>
         </div>
       </div>
+      <WeatherPlanner />
     </div>
   );
 }

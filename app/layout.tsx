@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { OfflineBanner } from "@/src/components/layout/OfflineBanner";
+import { WebVitalsReporter } from "@/lib/webVitals";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
       >
         {/* Offline status banner — renders above all content when offline */}
         <OfflineBanner />
+        <WebVitalsReporter />
         <Providers>{children}</Providers>
       </body>
     </html>

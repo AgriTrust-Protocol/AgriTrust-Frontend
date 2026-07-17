@@ -1,0 +1,43 @@
+name: Verify Database Backups
+
+on:
+  schedule:
+    # Daily at 02:15 UTC, outside the primary operating window.
+    - cron: "15 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-and-restore:
+    name: Restore latest backup in isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - name: Request restore verification
+        env:
+          BACKUP_VERIFICATION_URL: ${{ secrets.BACKUP_VERIFICATION_URL }}
+          BACKUP_VERIFICATION_TOKEN: ${{ secrets.BACKUP_VERIFICATION_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$BACKUP_VERIFICATION_URL"
+          test -n "$BACKUP_VERIFICATION_TOKEN"
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-all-errors --connect-timeout 10 --max-time 1500 \
+            --request POST "$BACKUP_VERIFICATION_URL" \
+            --header "Authorization: Bearer $BACKUP_VERIFICATION_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data '{"schemaVersion":1,"trigger":"github-actions","restoreTarget":"isolated"}'
+
+      - name: Notify on verification failure
+        if: failure()
+        env:
+          BACKUP_ALERT_WEBHOOK_URL: ${{ secrets.BACKUP_ALERT_WEBHOOK_URL }}
+        run: |
+          if [ -n "${BACKUP_ALERT_WEBHOOK_URL:-}" ]; then
+            curl --fail --silent --show-error --request POST "$BACKUP_ALERT_WEBHOOK_URL" \
+              --header "Content-Type: application/json" \
+              --data '{"severity":"critical","summary":"Scheduled database backup restore verification failed","run":"'"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"'"}'
+          fi
