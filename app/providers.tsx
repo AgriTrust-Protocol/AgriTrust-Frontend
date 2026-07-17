@@ -8,22 +8,32 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { LocaleProvider } from "@/src/hooks/useLocale";
 import { preloadCircuits } from "@/src/services/zkp/bootstrap";
 import { registerServiceWorker } from "@/src/services/swRegistration";
+import { ResilienceProvider, useResilience } from "@/src/components/resilience/ResilienceProvider";
+
+function ResilienceBootstrap({ children }: { children: ReactNode }) {
+  const { isEnabled } = useResilience();
+
+  useEffect(() => {
+    // These non-critical warmups are the first work removed under load.
+    if (isEnabled("zkpCircuitPreload")) void preloadCircuits();
+    if (isEnabled("serviceWorker")) void registerServiceWorker();
+  }, [isEnabled]);
+
+  return <>{children}</>;
+}
 
 export function Providers({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    // Warm the ZKP circuit cache so field verifications can run offline.
-    void preloadCircuits();
-    // Register the SW that drives lifecycle-aware certification caching.
-    void registerServiceWorker();
-  }, []);
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <LocaleProvider>
-        <WalletProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </WalletProvider>
-      </LocaleProvider>
-    </QueryClientProvider>
+    <ResilienceProvider>
+      <ResilienceBootstrap>
+        <QueryClientProvider client={queryClient}>
+          <LocaleProvider>
+            <WalletProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </WalletProvider>
+          </LocaleProvider>
+        </QueryClientProvider>
+      </ResilienceBootstrap>
+    </ResilienceProvider>
   );
 }
