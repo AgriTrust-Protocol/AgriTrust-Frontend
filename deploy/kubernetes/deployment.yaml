@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agritrust-frontend-stable
+  namespace: agritrust
+  labels:
+    app.kubernetes.io/name: agritrust-frontend
+    app.kubernetes.io/part-of: agritrust
+    track: stable
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agritrust-frontend
+      track: stable
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: agritrust-frontend
+        app.kubernetes.io/part-of: agritrust
+        track: stable
+      annotations:
+        proxy.istio.io/config: '{"holdApplicationUntilProxyStarts": true}'
+    spec:
+      serviceAccountName: agritrust-frontend
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: frontend
+          image: ghcr.io/agritrust-protocol/agritrust-frontend:REPLACE_WITH_DIGEST
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: APP_VERSION
+              value: stable
+          readinessProbe:
+            httpGet: { path: /api/health, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /api/health, port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agritrust-frontend-canary
+  namespace: agritrust
+  labels:
+    app.kubernetes.io/name: agritrust-frontend
+    app.kubernetes.io/part-of: agritrust
+    track: canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agritrust-frontend
+      track: canary
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: agritrust-frontend
+        app.kubernetes.io/part-of: agritrust
+        track: canary
+      annotations:
+        proxy.istio.io/config: '{"holdApplicationUntilProxyStarts": true}'
+    spec:
+      serviceAccountName: agritrust-frontend
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: frontend
+          image: ghcr.io/agritrust-protocol/agritrust-frontend:REPLACE_WITH_DIGEST
+          ports: [{ name: http, containerPort: 3000 }]
+          env: [{ name: APP_VERSION, value: canary }]
+          readinessProbe:
+            httpGet: { path: /api/health, port: http }
+          livenessProbe:
+            httpGet: { path: /api/health, port: http }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }

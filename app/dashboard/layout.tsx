@@ -34,6 +34,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <InternationalizedText id="nav.maps" />
             </a>
             <a
+              href="/dashboard/planner"
+              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Field planner
+            </a>
+            <a
               href="/wallet"
               className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             >

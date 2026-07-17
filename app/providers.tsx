@@ -9,6 +9,7 @@ import { LocaleProvider } from "@/src/hooks/useLocale";
 import { preloadCircuits } from "@/src/services/zkp/bootstrap";
 import { registerServiceWorker } from "@/src/services/swRegistration";
 import { WebVitalsReporter } from "@/lib/webVitals";
+import { TracingProvider } from "@/src/services/observability/TracingProvider";
 
 export function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
@@ -21,6 +22,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <WebVitalsReporter />
+      <TracingProvider />
       <LocaleProvider>
         <WalletProvider>
           <AuthProvider>{children}</AuthProvider>
