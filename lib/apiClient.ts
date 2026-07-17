@@ -5,6 +5,8 @@
  * simultaneous 401 responses without duplicate refresh calls.
  */
 
+import { getLogger, parseTraceparent } from "@/src/observability/logger";
+
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 interface ApiRequestOptions {
@@ -125,12 +127,27 @@ async function doFetch<T = unknown>(
     requestHeaders["Authorization"] = `Bearer ${accessToken}`;
   }
 
+  const startedAt = performance.now();
   const response = await fetch(url, {
     method,
     headers: requestHeaders,
     credentials,
     body: body ? JSON.stringify(body) : undefined,
   });
+
+  getLogger().log(
+    "INFO",
+    "HTTP request completed",
+    {
+      "http.request.method": method,
+      "http.response.status_code": response.status,
+      "url.full": url.split("?")[0],
+      "server.address": typeof window === "undefined" ? "server" : window.location.host,
+      "client.request.duration_ms": Math.round(performance.now() - startedAt),
+    },
+    undefined,
+    parseTraceparent(response.headers.get("traceparent"))
+  );
 
   // Handle 401: attempt token refresh
   if (response.status === 401) {
