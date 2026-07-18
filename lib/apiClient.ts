@@ -5,6 +5,7 @@
  * simultaneous 401 responses without duplicate refresh calls.
  */
 
+import { getLogger, parseTraceparent } from "@/src/observability/logger";
 import { parseRetryAfter, TenantTokenBucketLimiter } from "./tenantRateLimiter";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -149,6 +150,7 @@ async function doFetch<T = unknown>(
     requestHeaders["Authorization"] = `Bearer ${accessToken}`;
   }
 
+  const startedAt = performance.now();
   await tenantRateLimiter.acquire(activeTenantKey);
 
   const response = await fetch(url, {
@@ -157,6 +159,20 @@ async function doFetch<T = unknown>(
     credentials,
     body: body ? JSON.stringify(body) : undefined,
   });
+
+  getLogger().log(
+    "INFO",
+    "HTTP request completed",
+    {
+      "http.request.method": method,
+      "http.response.status_code": response.status,
+      "url.full": url.split("?")[0],
+      "server.address": typeof window === "undefined" ? "server" : window.location.host,
+      "client.request.duration_ms": Math.round(performance.now() - startedAt),
+    },
+    undefined,
+    parseTraceparent(response.headers.get("traceparent"))
+  );
 
   // Handle 401: attempt token refresh
   if (response.status === 401) {
