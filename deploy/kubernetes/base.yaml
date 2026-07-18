@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agritrust
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: agritrust-frontend
+  namespace: agritrust
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agritrust-frontend
+  namespace: agritrust
+  labels:
+    app.kubernetes.io/name: agritrust-frontend
+    app.kubernetes.io/part-of: agritrust
+spec:
+  selector:
+    app.kubernetes.io/name: agritrust-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agritrust-frontend-default-deny
+  namespace: agritrust
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: agritrust-frontend
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
