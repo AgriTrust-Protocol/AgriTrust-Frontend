@@ -22,6 +22,12 @@ export default function Home() {
           >
             <InternationalizedText id="home.cta.dashboard" />
           </Link>
+          <Link
+            href="/trading"
+            className="rounded-lg border border-zinc-300 bg-white px-6 py-3 text-sm font-semibold text-zinc-900 transition-colors hover:bg-zinc-100"
+          >
+            Trading Terminal
+          </Link>
         </div>
       </main>
     </div>
