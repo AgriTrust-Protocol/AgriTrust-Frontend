@@ -1,5 +1,5 @@
 {
-  "title": "AgriTrust Frontend Service Mesh and Database Migrations",
+  "title": "AgriTrust Frontend Service Mesh",
   "tags": [
     "agritrust",
     "istio",
@@ -35,29 +35,20 @@
       ]
     },
     {
-      "title": "Database migration duration (ms)",
+      "title": "Dead letter queue stores",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le, service) (rate(agritrust_database_migration_duration_ms_bucket[5m])))"
+          "expr": "sum by (source, reason) (rate(dead_letter_message_stored[5m]))"
         }
       ]
     },
     {
-      "title": "Database migration current version",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "max by (service) (agritrust_database_migration_current_version)"
-        }
-      ]
-    },
-    {
-      "title": "Database migration failures",
+      "title": "Webhook dead-lettered deliveries",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (service) (rate(agritrust_database_migration_failure_total[5m]))"
+          "expr": "sum by (reason, type) (rate(webhook_delivery_dead_lettered[5m]))"
         }
       ]
     }

@@ -25,12 +25,35 @@ class ZodString extends ZodSchema<string> {
   regex(pattern: RegExp): ZodString { return new ZodString([...this.checks, (value) => pattern.test(value) ? null : "has an invalid format"]); }
 }
 
+class ZodNumber extends ZodSchema<number> {
+  constructor(checks: Array<(value: number) => Issue | null> = []) {
+    super((value, path) => {
+      if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${path} must be a finite number`);
+      for (const check of checks) {
+        const issue = check(value);
+        if (issue) throw new Error(`${path} ${issue}`);
+      }
+      return value;
+    });
+    this.checks = checks;
+  }
+  private readonly checks: Array<(value: number) => Issue | null>;
+  int(): ZodNumber { return new ZodNumber([...this.checks, (value) => Number.isInteger(value) ? null : "must be an integer"]); }
+  min(minimum: number): ZodNumber { return new ZodNumber([...this.checks, (value) => value >= minimum ? null : `must be greater than or equal to ${minimum}`]); }
+  max(maximum: number): ZodNumber { return new ZodNumber([...this.checks, (value) => value <= maximum ? null : `must be less than or equal to ${maximum}`]); }
+}
+
 type InferObject<T extends Record<string, ZodSchema<unknown>>> = { [K in keyof T]: T[K] extends ZodSchema<infer U> ? U : never };
 
 export type ZodType<T = unknown> = ZodSchema<T>;
 
 export const z = {
   string: () => new ZodString(),
+  number: () => new ZodNumber(),
+  boolean: () => new ZodSchema<boolean>((value, path) => {
+    if (typeof value !== "boolean") throw new Error(`${path} must be a boolean`);
+    return value;
+  }),
   enum: <T extends readonly [string, ...string[]]>(values: T) => new ZodSchema<T[number]>((value, path) => {
     if (typeof value !== "string" || !values.includes(value)) throw new Error(`${path} must be one of: ${values.join(", ")}`);
     return value;
@@ -38,6 +61,10 @@ export const z = {
   array: <T>(schema: ZodSchema<T>) => new ZodSchema<T[]>((value, path) => {
     if (!Array.isArray(value)) throw new Error(`${path} must be an array`);
     return value.map((item) => schema.parse(item));
+  }),
+  record: <T>(schema: ZodSchema<T>) => new ZodSchema<Record<string, T>>((value, path) => {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error(`${path} must be an object`);
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, schema.parse(item)]));
   }),
   object: <T extends Record<string, ZodSchema<unknown>>>(shape: T) => new ZodSchema<InferObject<T>>((value, path) => {
     if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error(`${path} must be an object`);
