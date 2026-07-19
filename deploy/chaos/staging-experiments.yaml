@@ -1,0 +1,88 @@
+apiVersion: agritrust.io/v1alpha1
+kind: ChaosExperimentPlan
+metadata:
+  name: agritrust-staging-chaos-blueprint
+  namespace: agritrust-staging
+  labels:
+    app.kubernetes.io/name: agritrust
+    app.kubernetes.io/component: chaos-engineering
+    environment: staging
+spec:
+  safety:
+    productionEnabled: false
+    maxConcurrentExperiments: 1
+    requiredApprovals:
+      - platform-owner
+      - security-reviewer
+    globalAbortConditions:
+      - metric: critical_path_p99_ms
+        operator: ">="
+        threshold: 100
+        duration: 5m
+      - metric: availability_percent
+        operator: "<"
+        threshold: 99.99
+        duration: 5m
+      - metric: frontend_error_rate_percent
+        operator: ">="
+        threshold: 2
+        duration: 5m
+  canary:
+    firstTarget: inactive-blue-green-colour
+    promotionSteps: [5, 25, 50, 100]
+    analysisWindow: 15m
+    haltOnSloBreach: true
+  observability:
+    dashboard: deploy/observability/dashboard.json
+    prometheusRules: deploy/observability/monitoring.yaml
+    runbook: docs/runbooks/chaos-engineering-staging.md
+  experiments:
+    - id: frontend-pod-restart
+      type: pod-kill
+      target: agritrust-frontend-canary
+      duration: 2m
+      hypothesis: readiness removes failed pods before user impact
+      steadyState: critical path P99 below 100ms and at least one ready replica
+    - id: frontend-network-latency
+      type: network-delay
+      target: agritrust-frontend
+      duration: 5m
+      parameters:
+        latencyMs: 75
+        jitterMs: 10
+      hypothesis: critical routes stay inside the 100ms P99 budget
+      steadyState: frontend P99 below 100ms and smoke tests pass
+    - id: api-5xx-burst
+      type: upstream-http-fault
+      target: agritrust-api
+      duration: 10m
+      parameters:
+        errorRatePercent: 2
+      hypothesis: frontend boundaries and retries avoid cascading failures
+      steadyState: frontend error rate below 1 percent after retry policy
+    - id: postgres-read-delay
+      type: dependency-delay
+      target: postgres-read-service
+      duration: 5m
+      parameters:
+        latencyMs: 50
+      hypothesis: caches and query deadlines protect title lookup latency
+      steadyState: title lookup and verification P99 below 100ms
+    - id: kafka-consumer-pause
+      type: consumer-pause
+      target: agritrust-event-consumer
+      duration: 5m
+      hypothesis: stale-state messaging protects users until events resume
+      steadyState: lag recovers within 10 minutes after resume
+    - id: cache-eviction
+      type: cache-flush
+      target: public-read-model-cache
+      duration: 1m
+      hypothesis: cache cold starts preserve availability and auth safety
+      steadyState: availability remains at least 99.99 percent
+    - id: otel-collector-drop
+      type: network-drop
+      target: otel-collector
+      duration: 5m
+      hypothesis: telemetry export failures never block user requests
+      steadyState: application routes pass and span backlog remains bounded
