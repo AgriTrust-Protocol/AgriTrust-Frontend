@@ -1,12 +1,67 @@
 {
-  "title": "AgriTrust Frontend Service Mesh",
-  "tags": ["agritrust", "istio", "slo"],
+  "title": "AgriTrust Frontend Service Mesh and Database Migrations",
+  "tags": [
+    "agritrust",
+    "istio",
+    "slo"
+  ],
   "timezone": "utc",
   "panels": [
-    {"title": "Request rate", "type": "timeseries", "targets": [{"expr": "sum(rate(istio_requests_total{destination_service_name='agritrust-frontend'}[5m]))"}]},
-    {"title": "P99 latency (ms)", "type": "timeseries", "targets": [{"expr": "histogram_quantile(0.99, sum by (le) (rate(istio_request_duration_milliseconds_bucket{destination_service_name='agritrust-frontend'}[5m])))"}]},
-    {"title": "5xx ratio", "type": "timeseries", "targets": [{"expr": "sum(rate(istio_requests_total{destination_service_name='agritrust-frontend',response_code=~'5..'}[5m])) / clamp_min(sum(rate(istio_requests_total{destination_service_name='agritrust-frontend'}[5m])), 1)"}]}
+    {
+      "title": "Request rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(istio_requests_total{destination_service_name='agritrust-frontend'}[5m]))"
+        }
+      ]
+    },
+    {
+      "title": "P99 latency (ms)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(istio_request_duration_milliseconds_bucket{destination_service_name='agritrust-frontend'}[5m])))"
+        }
+      ]
+    },
+    {
+      "title": "5xx ratio",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(istio_requests_total{destination_service_name='agritrust-frontend',response_code=~'5..'}[5m])) / clamp_min(sum(rate(istio_requests_total{destination_service_name='agritrust-frontend'}[5m])), 1)"
+        }
+      ]
+    },
+    {
+      "title": "Database migration duration (ms)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, service) (rate(agritrust_database_migration_duration_ms_bucket[5m])))"
+        }
+      ]
+    },
+    {
+      "title": "Database migration current version",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max by (service) (agritrust_database_migration_current_version)"
+        }
+      ]
+    },
+    {
+      "title": "Database migration failures",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(agritrust_database_migration_failure_total[5m]))"
+        }
+      ]
+    }
   ],
   "schemaVersion": 39,
-  "version": 1
+  "version": 2
 }
