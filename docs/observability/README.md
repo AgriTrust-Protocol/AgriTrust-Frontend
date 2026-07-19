@@ -31,3 +31,18 @@ RPC, or untrusted third-party URLs.
 Import `dashboards/agritrust-frontend-tracing.json` into Grafana and load
 `alerts/frontend-tracing-rules.yaml` in Prometheus-compatible alerting. See the
 [runbook](runbook.md) for alert response and the blue-green/canary release plan.
+
+
+## SLO monitoring and burn-rate alerts
+
+The production SLO is measured at the service-mesh boundary: 99.99% availability
+with a 0.01% error budget and critical-path P99 latency below 100ms. Prometheus
+recording rules in `deploy/observability/monitoring.yaml` calculate normalized
+burn rates for 5m, 30m, 1h, 2h, 6h, and 1d windows. Page-level alerts require
+both a short and long window to exceed the configured threshold, which catches
+real incidents while suppressing single-scrape noise.
+
+Import `deploy/observability/dashboard.json` for request rate, burn rate, P99
+latency, error-ratio, and blue-green/canary readiness panels. See
+`docs/architecture/slo-monitoring.md` for design details and
+`docs/runbooks/slo-burn-rate.md` for response steps.

@@ -1,3 +1,4 @@
+import type { DeadLetterQueue, DeadLetterReason } from "@/src/services/messaging/deadLetterQueue";
 import type {
   WebhookAttempt,
   WebhookDeliveryRequest,
@@ -33,6 +34,14 @@ export interface WebhookDeliveryOptions {
   onMetric?: (metric: WebhookMetric) => void;
   /** Apply the backend endpoint allow-list after the baseline URL checks. */
   isAllowedEndpoint?: (url: URL) => boolean;
+  deadLetterQueue?: DeadLetterQueue<WebhookDeliveryDeadLetterPayload>;
+}
+
+export interface WebhookDeliveryDeadLetterPayload {
+  url: string;
+  signingKeyId: string;
+  event: WebhookDeliveryRequest["event"];
+  deliveryId: string;
 }
 
 function getSubtle(): SubtleCrypto {
@@ -204,6 +213,23 @@ export class WebhookDeliveryService {
     const signature = await signWebhookPayload(secret, timestamp, deliveryId, body);
     const attempts: WebhookAttempt[] = [];
 
+    const deadLetter = async (reason: DeadLetterReason, error: unknown): Promise<WebhookDeliveryResult> => {
+      await this.options.deadLetterQueue?.enqueue({
+        id: deliveryId,
+        type: request.event.type,
+        payload: { url: request.url, signingKeyId: request.signingKeyId, event: request.event, deliveryId },
+        attempts: attempts.length,
+        error,
+        reason,
+        source: "webhook-delivery",
+        correlationId: request.event.id,
+        replayable: reason !== "non_retryable",
+        metadata: { endpointHost: endpoint.hostname },
+      });
+      this.options.onMetric?.({ name: "webhook_delivery_dead_lettered", value: 1, tags: { reason, type: request.event.type } });
+      return { deliveryId, eventId: request.event.id, success: false, attempts, deadLettered: Boolean(this.options.deadLetterQueue) };
+    };
+
     for (let number = 1; number <= this.policy.maxAttempts; number += 1) {
       const startedAt = this.options.now();
       let response: Response | undefined;
@@ -240,9 +266,13 @@ export class WebhookDeliveryService {
       attempts.push(attempt);
       this.options.onMetric?.({ name: "webhook_delivery_attempt", value: 1, tags: { status: response?.status ?? "network_error", success, attempt: number } });
 
-      if (success || !canRetry) {
+      if (success) {
         this.options.onMetric?.({ name: "webhook_delivery_completed", value: 1, tags: { success, attempts: number } });
         return { deliveryId, eventId: request.event.id, success, attempts };
+      }
+      if (!canRetry) {
+        this.options.onMetric?.({ name: "webhook_delivery_completed", value: 1, tags: { success, attempts: number } });
+        return deadLetter(retryable ? "retry_exhausted" : "non_retryable", error ?? `HTTP ${response?.status ?? "network_error"}`);
       }
       await this.options.sleep(delay);
     }
