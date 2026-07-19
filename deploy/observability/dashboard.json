@@ -1,11 +1,57 @@
 {
   "title": "AgriTrust Frontend Service Mesh",
-  "tags": ["agritrust", "istio", "slo"],
+  "tags": [
+    "agritrust",
+    "istio",
+    "slo"
+  ],
   "timezone": "utc",
   "panels": [
-    {"title": "Request rate", "type": "timeseries", "targets": [{"expr": "sum(rate(istio_requests_total{destination_service_name='agritrust-frontend'}[5m]))"}]},
-    {"title": "P99 latency (ms)", "type": "timeseries", "targets": [{"expr": "histogram_quantile(0.99, sum by (le) (rate(istio_request_duration_milliseconds_bucket{destination_service_name='agritrust-frontend'}[5m])))"}]},
-    {"title": "5xx ratio", "type": "timeseries", "targets": [{"expr": "sum(rate(istio_requests_total{destination_service_name='agritrust-frontend',response_code=~'5..'}[5m])) / clamp_min(sum(rate(istio_requests_total{destination_service_name='agritrust-frontend'}[5m])), 1)"}]}
+    {
+      "title": "Request rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(istio_requests_total{destination_service_name='agritrust-frontend'}[5m]))"
+        }
+      ]
+    },
+    {
+      "title": "P99 latency (ms)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(istio_request_duration_milliseconds_bucket{destination_service_name='agritrust-frontend'}[5m])))"
+        }
+      ]
+    },
+    {
+      "title": "5xx ratio",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(istio_requests_total{destination_service_name='agritrust-frontend',response_code=~'5..'}[5m])) / clamp_min(sum(rate(istio_requests_total{destination_service_name='agritrust-frontend'}[5m])), 1)"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Runtime Config Compliance",
+      "targets": [
+        {
+          "expr": "agritrust_runtime_config_compliant{service=\"agritrust-frontend\"}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Runtime Config Drift Findings",
+      "targets": [
+        {
+          "expr": "agritrust_runtime_config_drift_total{service=\"agritrust-frontend\"}"
+        }
+      ]
+    }
   ],
   "schemaVersion": 39,
   "version": 1

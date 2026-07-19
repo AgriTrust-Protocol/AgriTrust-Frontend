@@ -31,3 +31,17 @@ spec:
           labels: { severity: page, service: agritrust-frontend }
           annotations:
             summary: "An AgriTrust frontend track has no ready pods"
+        - alert: AgriTrustRuntimeConfigDrift
+          expr: agritrust_runtime_config_compliant{service="agritrust-frontend"} == 0
+          for: 2m
+          labels: { severity: page, service: agritrust-frontend }
+          annotations:
+            summary: "AgriTrust frontend runtime configuration drift detected"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runtime-config-audit.md"
+        - alert: AgriTrustRuntimeConfigCriticalDrift
+          expr: agritrust_runtime_config_drift_total{service="agritrust-frontend",severity="critical"} > 0
+          for: 1m
+          labels: { severity: page, service: agritrust-frontend }
+          annotations:
+            summary: "AgriTrust frontend critical runtime configuration drift detected"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runtime-config-audit.md"
