@@ -29,10 +29,11 @@ export interface WebhookDeliveryResult {
   eventId: string;
   success: boolean;
   attempts: WebhookAttempt[];
+  deadLettered?: boolean;
 }
 
 export interface WebhookMetric {
-  name: "webhook_delivery_attempt" | "webhook_delivery_completed";
+  name: "webhook_delivery_attempt" | "webhook_delivery_completed" | "webhook_delivery_dead_lettered";
   value: number;
   tags: Record<string, string | number | boolean>;
 }
