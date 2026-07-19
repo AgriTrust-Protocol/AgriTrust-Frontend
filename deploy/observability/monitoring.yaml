@@ -83,4 +83,17 @@ spec:
           labels: { severity: page, service: agritrust-frontend, slo: availability }
           annotations:
             summary: "An AgriTrust frontend track has no ready pods"
-            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/slo-burn-rate.md"
+        - alert: AgriTrustDeadLetterQueueGrowing
+          expr: sum(rate(dead_letter_message_stored[5m])) > 0
+          for: 5m
+          labels: { severity: page, service: agritrust-messaging }
+          annotations:
+            summary: "AgriTrust dead letter queue is receiving failed messages"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/dead-letter-queue.md"
+        - alert: AgriTrustWebhookDeadLetterRate
+          expr: sum(rate(webhook_delivery_dead_lettered[5m])) > 0
+          for: 5m
+          labels: { severity: page, service: agritrust-webhooks }
+          annotations:
+            summary: "Webhook deliveries are being dead-lettered"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/dead-letter-queue.md"

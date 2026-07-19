@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "setup:local": "node scripts/setup-local-dev.mjs",
+    "setup:local:check": "node scripts/setup-local-dev.mjs --check"
   },
   "dependencies": {
     "react-leaflet": "^4.2.2",
@@ -18,7 +20,6 @@
     "dompurify": "^3.4.11",
     "eventemitter3": "^5.0.4",
     "idb": "^8.0.3",
-    "leaflet": "^1.9.4",
     "next": "16.1.6",
     "pako": "^2.1.0",
     "qrcode": "^1.5.4",
