@@ -1,12 +1,76 @@
 {
-  "title": "AgriTrust Frontend Service Mesh",
-  "tags": ["agritrust", "istio", "slo"],
+  "title": "AgriTrust Frontend SLOs",
+  "tags": [
+    "agritrust",
+    "istio",
+    "slo"
+  ],
   "timezone": "utc",
   "panels": [
-    {"title": "Request rate", "type": "timeseries", "targets": [{"expr": "sum(rate(istio_requests_total{destination_service_name='agritrust-frontend'}[5m]))"}]},
-    {"title": "P99 latency (ms)", "type": "timeseries", "targets": [{"expr": "histogram_quantile(0.99, sum by (le) (rate(istio_request_duration_milliseconds_bucket{destination_service_name='agritrust-frontend'}[5m])))"}]},
-    {"title": "5xx ratio", "type": "timeseries", "targets": [{"expr": "sum(rate(istio_requests_total{destination_service_name='agritrust-frontend',response_code=~'5..'}[5m])) / clamp_min(sum(rate(istio_requests_total{destination_service_name='agritrust-frontend'}[5m])), 1)"}]}
+    {
+      "title": "Request rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(istio_requests_total{destination_service_name=\"agritrust-frontend\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "title": "Availability burn rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "agritrust_frontend:burn_rate:5m"
+        },
+        {
+          "expr": "agritrust_frontend:burn_rate:30m"
+        },
+        {
+          "expr": "agritrust_frontend:burn_rate:1h"
+        },
+        {
+          "expr": "agritrust_frontend:burn_rate:2h"
+        },
+        {
+          "expr": "agritrust_frontend:burn_rate:6h"
+        },
+        {
+          "expr": "agritrust_frontend:burn_rate:1d"
+        }
+      ]
+    },
+    {
+      "title": "P99 latency vs 100ms SLO",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "agritrust_frontend:p99_latency_ms:5m"
+        },
+        {
+          "expr": "100"
+        }
+      ]
+    },
+    {
+      "title": "5xx ratio",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "agritrust_frontend:request_error_ratio:5m"
+        }
+      ]
+    },
+    {
+      "title": "Stable/canary ready pods",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "kube_deployment_status_replicas_available{namespace=\"agritrust\",deployment=~\"agritrust-frontend-(stable|canary)\"}"
+        }
+      ]
+    }
   ],
   "schemaVersion": 39,
-  "version": 1
+  "version": 2
 }
