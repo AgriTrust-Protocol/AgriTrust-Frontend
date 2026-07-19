@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:chaos-blueprint": "node scripts/validate-chaos-blueprint.mjs"
   },
   "dependencies": {
     "react-leaflet": "^4.2.2",
