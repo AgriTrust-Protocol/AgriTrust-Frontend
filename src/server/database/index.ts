@@ -33,3 +33,15 @@ function numberEnv(name: string, fallback: number): number {
   const value = Number(process.env[name]);
   return Number.isInteger(value) && value > 0 ? value : fallback;
 }
+export {
+  DatabaseMigrationRunner,
+  buildMigrationPlan,
+  checksumMigration,
+  type AppliedMigration,
+  type MigrationConnection,
+  type MigrationDirection,
+  type MigrationPlanItem,
+  type MigrationRunOptions,
+  type MigrationRunResult,
+  type MigrationStep,
+} from "./migrations";
