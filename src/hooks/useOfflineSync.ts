@@ -2,12 +2,17 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  processSyncQueue,
   getPendingSyncCount,
   getStorageUsage,
   getTotalAuditCount,
   getSyncedAuditCount,
 } from "@/src/services/indexedDbStore";
+import { requestPersistentStorage } from "@/src/offline/FormStore";
+import {
+  registerBackgroundSync,
+  replayQueuedSubmissions,
+  trackOfflineDuration,
+} from "@/src/offline/SyncManager";
 
 export interface OfflineSyncState {
   isOnline: boolean;
@@ -30,6 +35,7 @@ export function useOfflineSync() {
 
   // Prevent concurrent sync runs
   const isSyncingRef = useRef(false);
+  const stopOfflineTimerRef = useRef<(() => void) | undefined>(undefined);
 
   const refreshStats = useCallback(async () => {
     const [pendingCount, storageUsage, totalCount, syncedCount] =
@@ -53,7 +59,7 @@ export function useOfflineSync() {
     isSyncingRef.current = true;
     setState((prev) => ({ ...prev, isSyncing: true }));
     try {
-      await processSyncQueue();
+      await replayQueuedSubmissions();
       await refreshStats();
     } finally {
       isSyncingRef.current = false;
@@ -63,13 +69,18 @@ export function useOfflineSync() {
 
   useEffect(() => {
     refreshStats();
+    void requestPersistentStorage();
+    void registerBackgroundSync();
 
     const handleOnline = () => {
       setState((prev) => ({ ...prev, isOnline: true }));
+      stopOfflineTimerRef.current?.();
+      stopOfflineTimerRef.current = undefined;
       runSync();
     };
     const handleOffline = () => {
       setState((prev) => ({ ...prev, isOnline: false }));
+      stopOfflineTimerRef.current = trackOfflineDuration(false);
     };
 
     window.addEventListener("online", handleOnline);
@@ -80,6 +91,7 @@ export function useOfflineSync() {
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
+      stopOfflineTimerRef.current?.();
     };
   }, [runSync, refreshStats]);
 
