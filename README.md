@@ -16,19 +16,24 @@ Next.js web application for the AgriTrust Protocol, providing a decentralized da
 ### Prerequisites
 Ensure you have the required toolchains installed:
 * Node.js (v18 or higher recommended)
-* npm (Node Package Manager)
+* npm or pnpm (the onboarding script auto-detects the checked-in lockfile)
 
 ### Installation & Local Setup
 ```bash
 # Clone the repository (if running manually)
 git clone https://github.com/AgriTrust-Protocol/AgriTrust-Frontend
+cd AgriTrust-Frontend
 
-# Install dependencies or build
-npm install
+# Run the onboarding script. It verifies Node.js, creates .env.local from
+# .env.example when needed, and installs dependencies with the detected package manager.
+npm run setup:local
 
 # Start development server
 npm run dev
 ```
+
+Use `npm run setup:local -- --skip-install` if dependencies are already installed. Use
+`npm run setup:local:check` before opening a PR to validate the setup plus lint and tests.
 
 ## 🤝 Contributing
 Contributions are highly welcome. Please ensure your commits are cryptographically signed using GPG or SSH keys. For major structural changes, please open an issue first to discuss your proposal.
