@@ -46,7 +46,7 @@ interface AgriTrustDB extends DBSchema {
 
 const DB_NAME = "agritrust-offline";
 const DB_VERSION = 1;
-const MAX_QUEUE_SIZE = 500;
+export const MAX_QUEUE_SIZE = 500;
 
 let dbPromise: Promise<IDBPDatabase<AgriTrustDB>> | null = null;
 
@@ -117,6 +117,18 @@ export async function saveAuditOffline(
   await tx.objectStore("audits").put(auditRecord);
   await tx.objectStore("syncQueue").put(syncEntry);
   await tx.done;
+
+  if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+    void navigator.serviceWorker.ready
+      .then((registration) =>
+        (
+          registration as ServiceWorkerRegistration & {
+            sync?: { register(tag: string): Promise<void> };
+          }
+        ).sync?.register("sync-audits")
+      )
+      .catch(() => undefined);
+  }
 
   return localId;
 }
@@ -218,4 +230,30 @@ export async function getSyncedAuditCount(): Promise<number> {
 /** Resets the singleton DB connection — for use in tests only. */
 export function _resetDbForTests(): void {
   dbPromise = null;
+}
+
+export async function getSyncQueueEntries(): Promise<SyncQueueEntry[]> {
+  const db = await getDb();
+  return db.getAllFromIndex("syncQueue", "by-createdAt");
+}
+
+export async function resolveConflict(
+  entryId: string,
+  resolution: "local" | "server"
+): Promise<void> {
+  const db = await getDb();
+  const entry = await db.get("syncQueue", entryId);
+  if (!entry) return;
+  if (resolution === "local") {
+    await db.put("syncQueue", { ...entry, status: "pending" });
+    return;
+  }
+  if (entry.serverVersion) {
+    const tx = db.transaction(["audits", "syncQueue"], "readwrite");
+    await tx
+      .objectStore("audits")
+      .put({ ...entry.serverVersion, localId: entry.auditLocalId, synced: true });
+    await tx.objectStore("syncQueue").delete(entry.id);
+    await tx.done;
+  }
 }
