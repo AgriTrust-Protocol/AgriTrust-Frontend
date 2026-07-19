@@ -1,0 +1,99 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: agritrust-frontend-slo
+  namespace: agritrust
+  labels: { release: prometheus }
+spec:
+  groups:
+    - name: agritrust-frontend.slo
+      rules:
+        - record: agritrust_frontend:request_error_ratio:5m
+          expr: |
+            sum(rate(istio_requests_total{destination_service_name="agritrust-frontend",response_code=~"5.."}[5m]))
+            / clamp_min(sum(rate(istio_requests_total{destination_service_name="agritrust-frontend"}[5m])), 1)
+        - record: agritrust_frontend:request_error_ratio:30m
+          expr: |
+            sum(rate(istio_requests_total{destination_service_name="agritrust-frontend",response_code=~"5.."}[30m]))
+            / clamp_min(sum(rate(istio_requests_total{destination_service_name="agritrust-frontend"}[30m])), 1)
+        - record: agritrust_frontend:request_error_ratio:1h
+          expr: |
+            sum(rate(istio_requests_total{destination_service_name="agritrust-frontend",response_code=~"5.."}[1h]))
+            / clamp_min(sum(rate(istio_requests_total{destination_service_name="agritrust-frontend"}[1h])), 1)
+        - record: agritrust_frontend:request_error_ratio:6h
+          expr: |
+            sum(rate(istio_requests_total{destination_service_name="agritrust-frontend",response_code=~"5.."}[6h]))
+            / clamp_min(sum(rate(istio_requests_total{destination_service_name="agritrust-frontend"}[6h])), 1)
+        - record: agritrust_frontend:request_error_ratio:2h
+          expr: |
+            sum(rate(istio_requests_total{destination_service_name="agritrust-frontend",response_code=~"5.."}[2h]))
+            / clamp_min(sum(rate(istio_requests_total{destination_service_name="agritrust-frontend"}[2h])), 1)
+        - record: agritrust_frontend:request_error_ratio:1d
+          expr: |
+            sum(rate(istio_requests_total{destination_service_name="agritrust-frontend",response_code=~"5.."}[1d]))
+            / clamp_min(sum(rate(istio_requests_total{destination_service_name="agritrust-frontend"}[1d])), 1)
+        - record: agritrust_frontend:burn_rate:5m
+          expr: agritrust_frontend:request_error_ratio:5m / 0.0001
+        - record: agritrust_frontend:burn_rate:30m
+          expr: agritrust_frontend:request_error_ratio:30m / 0.0001
+        - record: agritrust_frontend:burn_rate:1h
+          expr: agritrust_frontend:request_error_ratio:1h / 0.0001
+        - record: agritrust_frontend:burn_rate:6h
+          expr: agritrust_frontend:request_error_ratio:6h / 0.0001
+        - record: agritrust_frontend:burn_rate:2h
+          expr: agritrust_frontend:request_error_ratio:2h / 0.0001
+        - record: agritrust_frontend:burn_rate:1d
+          expr: agritrust_frontend:request_error_ratio:1d / 0.0001
+        - record: agritrust_frontend:p99_latency_ms:5m
+          expr: |
+            histogram_quantile(0.99, sum by (le) (rate(istio_request_duration_milliseconds_bucket{destination_service_name="agritrust-frontend"}[5m])))
+        - alert: AgriTrustFrontendFastErrorBudgetBurn
+          expr: agritrust_frontend:burn_rate:5m > 14.4 and agritrust_frontend:burn_rate:1h > 14.4
+          for: 2m
+          labels: { severity: page, service: agritrust-frontend, slo: availability }
+          annotations:
+            summary: "AgriTrust frontend is rapidly burning availability error budget"
+            description: "5m and 1h burn rates both exceed 14.4x for the 99.99% availability SLO."
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/slo-burn-rate.md"
+        - alert: AgriTrustFrontendSustainedErrorBudgetBurn
+          expr: agritrust_frontend:burn_rate:30m > 6 and agritrust_frontend:burn_rate:6h > 6
+          for: 15m
+          labels: { severity: page, service: agritrust-frontend, slo: availability }
+          annotations:
+            summary: "AgriTrust frontend has sustained availability error budget burn"
+            description: "30m and 6h burn rates both exceed 6x for the 99.99% availability SLO."
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/slo-burn-rate.md"
+        - alert: AgriTrustFrontendSlowErrorBudgetBurn
+          expr: agritrust_frontend:burn_rate:2h > 3 and agritrust_frontend:burn_rate:1d > 3
+          for: 30m
+          labels: { severity: ticket, service: agritrust-frontend, slo: availability }
+          annotations:
+            summary: "AgriTrust frontend is steadily consuming availability error budget"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/slo-burn-rate.md"
+        - alert: AgriTrustFrontendLatencyBudgetBurn
+          expr: agritrust_frontend:p99_latency_ms:5m > 100
+          for: 10m
+          labels: { severity: page, service: agritrust-frontend, slo: latency }
+          annotations:
+            summary: "AgriTrust frontend P99 latency exceeds 100ms"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/slo-burn-rate.md"
+        - alert: AgriTrustFrontendNoReadyPods
+          expr: kube_deployment_status_replicas_available{namespace="agritrust",deployment=~"agritrust-frontend-(stable|canary)"} < 1
+          for: 2m
+          labels: { severity: page, service: agritrust-frontend, slo: availability }
+          annotations:
+            summary: "An AgriTrust frontend track has no ready pods"
+        - alert: AgriTrustDeadLetterQueueGrowing
+          expr: sum(rate(dead_letter_message_stored[5m])) > 0
+          for: 5m
+          labels: { severity: page, service: agritrust-messaging }
+          annotations:
+            summary: "AgriTrust dead letter queue is receiving failed messages"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/dead-letter-queue.md"
+        - alert: AgriTrustWebhookDeadLetterRate
+          expr: sum(rate(webhook_delivery_dead_lettered[5m])) > 0
+          for: 5m
+          labels: { severity: page, service: agritrust-webhooks }
+          annotations:
+            summary: "Webhook deliveries are being dead-lettered"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/dead-letter-queue.md"

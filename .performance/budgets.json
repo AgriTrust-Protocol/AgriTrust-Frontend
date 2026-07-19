@@ -1,0 +1,6 @@
+{
+  "performance": { "minScore": 0.9 },
+  "largest-contentful-paint": { "maxNumericValue": 2500 },
+  "server-response-time": { "maxNumericValue": 100 },
+  "total-byte-weight": { "maxNumericValue": 2000000 }
+}
