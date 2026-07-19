@@ -2,13 +2,15 @@
   "name": "agritrust-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Frontend for AgriTrust Protocol — decentralized agricultural trust fund management on Stellar Soroban",
+  "description": "Frontend for AgriTrust Protocol \u2014 decentralized agricultural trust fund management on Stellar Soroban",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "coverage:check": "node scripts/check-coverage-thresholds.mjs"
   },
   "dependencies": {
     "react-leaflet": "^4.2.2",
@@ -18,7 +20,6 @@
     "dompurify": "^3.4.11",
     "eventemitter3": "^5.0.4",
     "idb": "^8.0.3",
-    "leaflet": "^1.9.4",
     "next": "16.1.6",
     "pako": "^2.1.0",
     "qrcode": "^1.5.4",
@@ -42,6 +43,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.9",
     "@vitest/ui": "^4.1.9",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
