@@ -9,8 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "coverage:check": "node scripts/check-coverage-thresholds.mjs"
+    "setup:local": "node scripts/setup-local-dev.mjs",
+    "setup:local:check": "node scripts/setup-local-dev.mjs --check"
   },
   "dependencies": {
     "react-leaflet": "^4.2.2",
