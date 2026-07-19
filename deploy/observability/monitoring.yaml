@@ -31,3 +31,17 @@ spec:
           labels: { severity: page, service: agritrust-frontend }
           annotations:
             summary: "An AgriTrust frontend track has no ready pods"
+        - alert: AgriTrustDatabaseMigrationFailure
+          expr: sum(rate(agritrust_database_migration_failure_total[5m])) by (service) > 0
+          for: 1m
+          labels: { severity: page, service: agritrust-frontend }
+          annotations:
+            summary: "AgriTrust database migration failed"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/database-migration-versioning.md#rollback"
+        - alert: AgriTrustDatabaseMigrationVersionDrift
+          expr: max(agritrust_database_migration_expected_version) by (service) - max(agritrust_database_migration_current_version) by (service) != 0
+          for: 5m
+          labels: { severity: page, service: agritrust-frontend }
+          annotations:
+            summary: "AgriTrust database migration version drift detected"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/database-migration-versioning.md#forward-migration"
