@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+      docs_only: ${{ steps.docs.outputs.docs_only }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            app:
+              - 'app/**'
+              - 'components/**'
+              - 'hooks/**'
+              - 'lib/**'
+              - 'services/**'
+              - 'src/**'
+              - 'types/**'
+              - 'public/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+              - 'next.config.*'
+              - 'eslint.config.*'
+              - 'postcss.config.*'
+              - 'vitest.setup.*'
+            workflows:
+              - '.github/workflows/**'
+      - name: Mark documentation-only changes
+        id: docs
+        env:
+          APP_CHANGED: ${{ steps.filter.outputs.app }}
+          WORKFLOWS_CHANGED: ${{ steps.filter.outputs.workflows }}
+        run: |
+          if [[ "$APP_CHANGED" == "false" && "$WORKFLOWS_CHANGED" == "false" ]]; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  install:
+    name: Install dependencies
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Restore Next.js cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('package-lock.json', 'pnpm-lock.yaml') }}-${{ hashFiles('app/**', 'components/**', 'hooks/**', 'lib/**', 'services/**', 'src/**', 'types/**') }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ hashFiles('package-lock.json', 'pnpm-lock.yaml') }}-
+      - name: Install locked dependencies
+        run: npm ci --prefer-offline --no-audit
+
+  quality:
+    name: ${{ matrix.check.name }}
+    runs-on: ubuntu-latest
+    needs: [changes, install]
+    if: needs.changes.outputs.docs_only != 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - name: Lint
+            command: npm run lint
+          - name: Unit tests
+            command: npm test -- --coverage=false
+          - name: Build
+            command: npm run build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Restore Next.js cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('package-lock.json', 'pnpm-lock.yaml') }}-${{ hashFiles('app/**', 'components/**', 'hooks/**', 'lib/**', 'services/**', 'src/**', 'types/**') }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ hashFiles('package-lock.json', 'pnpm-lock.yaml') }}-
+      - name: Install locked dependencies
+        run: npm ci --prefer-offline --no-audit
+      - name: Run ${{ matrix.check.name }}
+        run: ${{ matrix.check.command }}
+
+  security:
+    name: Dependency security audit
+    runs-on: ubuntu-latest
+    needs: [changes, install]
+    if: needs.changes.outputs.docs_only != 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --prefer-offline --no-audit
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+  ci-result:
+    name: CI result
+    runs-on: ubuntu-latest
+    needs: [changes, quality, security]
+    if: always()
+    steps:
+      - name: Verify required jobs
+        env:
+          DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
+        run: |
+          if [[ "$DOCS_ONLY" == "true" ]]; then
+            echo "Documentation-only change; expensive checks skipped."
+            exit 0
+          fi
+          if [[ "$QUALITY_RESULT" != "success" || "$SECURITY_RESULT" != "success" ]]; then
+            echo "One or more CI jobs failed."
+            exit 1
+          fi
