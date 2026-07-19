@@ -2,7 +2,7 @@
   "name": "agritrust-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Frontend for AgriTrust Protocol — decentralized agricultural trust fund management on Stellar Soroban",
+  "description": "Frontend for AgriTrust Protocol \u2014 decentralized agricultural trust fund management on Stellar Soroban",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -43,6 +43,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.9",
     "@vitest/ui": "^4.1.9",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
