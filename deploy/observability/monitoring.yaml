@@ -16,7 +16,7 @@ spec:
           labels: { severity: page, service: agritrust-frontend }
           annotations:
             summary: "AgriTrust frontend 5xx rate exceeds 1%"
-            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/service-mesh.md"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/incident-response-pagerduty.md"
         - alert: AgriTrustFrontendLatencyBudgetBurn
           expr: |
             histogram_quantile(0.99, sum by (le) (rate(istio_request_duration_milliseconds_bucket{destination_service_name="agritrust-frontend"}[5m]))) > 100
@@ -24,10 +24,18 @@ spec:
           labels: { severity: page, service: agritrust-frontend }
           annotations:
             summary: "AgriTrust frontend P99 latency exceeds 100ms"
-            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/service-mesh.md"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/incident-response-pagerduty.md"
         - alert: AgriTrustFrontendNoReadyPods
           expr: kube_deployment_status_replicas_available{namespace="agritrust",deployment=~"agritrust-frontend-(stable|canary)"} < 1
           for: 2m
           labels: { severity: page, service: agritrust-frontend }
           annotations:
             summary: "An AgriTrust frontend track has no ready pods"
+
+        - alert: AgriTrustFrontendPagerDutyAutomationStalled
+          expr: increase(agritrust_incident_runbook_plan_failures_total{service="agritrust-frontend"}[10m]) > 0
+          for: 2m
+          labels: { severity: page, service: agritrust-frontend, integration: pagerduty }
+          annotations:
+            summary: "PagerDuty runbook automation failed to prepare an incident plan"
+            runbook_url: "https://github.com/AgriTrust-Protocol/AgriTrust-Frontend/blob/main/docs/runbooks/incident-response-pagerduty.md"
