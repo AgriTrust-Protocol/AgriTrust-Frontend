@@ -26,3 +26,11 @@ Deploy the worker with blue-green releases: bring up green consumers against the
 2. For a receiver outage, leave transient deliveries queued. Contact the receiver after its retry budget is exhausted and offer a controlled replay by event id.
 3. For suspected secret exposure, disable the endpoint, rotate its secret/key id, re-enable it, and replay only events generated after the rotation decision.
 4. For a signature-verification incident, compare the canonical body and timestamp on both sides and confirm clock synchronization before replaying.
+
+## Dead letter queue architecture
+
+Terminal delivery failures are written to a dead letter queue (DLQ) after the bounded retry policy completes, or immediately when a receiver returns a non-retryable response. DLQ records include the event id, delivery id, event type, source service, attempt count, sanitized error text, failure reason, replay eligibility, and non-sensitive metadata such as endpoint host. Payload bodies are retained only in the protected backend store used for controlled replay; logs and metrics must never include bodies, signatures, URLs, or secrets.
+
+The DLQ write is intentionally outside the critical request path: outbox workers call `WebhookDeliveryService`, and only failed terminal results are persisted. This keeps successful critical paths below the 100 ms P99 target while preserving failed messages for operator review. Production stores should enforce encryption at rest, least-privilege replay permissions, retention policies, and immutable audit events for replay and discard actions.
+
+Replay is allowed for exhausted transient failures once the receiver has recovered. Non-retryable 4xx failures are marked not replayable by default because the request contract or endpoint configuration must be fixed before a new event is emitted. Operators may discard obsolete DLQ records after confirming downstream state and capturing the reason in the incident log.
