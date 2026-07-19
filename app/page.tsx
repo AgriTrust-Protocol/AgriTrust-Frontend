@@ -22,6 +22,12 @@ export default function Home() {
           >
             <InternationalizedText id="home.cta.dashboard" />
           </Link>
+          <Link
+            href="/claims"
+            className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-900 transition-colors hover:bg-white"
+          >
+            Claims portal
+          </Link>
         </div>
       </main>
     </div>
