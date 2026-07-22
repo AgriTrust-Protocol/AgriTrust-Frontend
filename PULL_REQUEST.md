@@ -1,298 +1,219 @@
-# Fix: Implement Arbitrary-Precision Decimal Arithmetic for On-Chain Trade Settlements
+# PR: Yield Dashboard with Real-Time Oracle Price Feeds and Charting
 
-## 🎯 Problem Statement
+Closes #82
 
-JavaScript's floating-point arithmetic causes rounding display inaccuracies when calculating multi-step trade settlements scaled to 7 decimals on-chain.
+---
 
-**Example Issues**:
-```javascript
-0.1 + 0.2 = 0.30000000000000004  // Not 0.3!
-123.456 * 1e7 = floating-point artifacts
+## Summary
+
+Implements a real-time yield dashboard providing farmers with live oracle price feeds, interactive OHLC charting, farm-level KPIs with sparklines, configurable price threshold alerts (browser notifications), offline IndexedDB caching, and connection health monitoring — all built on the project's existing signal-based reactive architecture.
+
+---
+
+## Changes at a Glance
+
+| Category | Files | Lines |
+|----------|-------|-------|
+| **New: Types** | `src/types/prices.ts` | 177 |
+| **New: Service** | `src/services/priceCache.ts` | 129 |
+| **New: Store** | `src/stores/priceFeedStore.ts` | 212 |
+| **New: Hooks** | `src/hooks/usePriceFeed.ts`, `src/hooks/useAlertConfig.ts` | 543 |
+| **New: Components** | `Sparkline.tsx`, `PriceFeedCard.tsx`, `PriceChart.tsx`, `KpiGrid.tsx`, `YieldDashboard.tsx` | 1,222 |
+| **New: Tests** | `src/components/dashboard/__tests__/yieldDashboard.test.tsx` | 634 |
+| **Modified** | `app/dashboard/page.tsx`, `vitest.config.ts`, `package.json`, `package-lock.json` | +410 / -101 |
+| **Total** | **15 files** | **~2,917 new lines** |
+
+---
+
+## Architecture
+
+### Data Flow
+
+```
+Oracle WS (wss://oracle.agritrust.io/ws/prices)
+           │
+           ▼
+    usePriceFeed.ts          ──→  priceFeedStore.ts  ──→  React Components
+    (WebSocket hook)               (signal-based store)     (useSignal bridge)
+           │                              │
+           ▼                              ▼
+    priceCache.ts                 computed KPIs, freshness
+    (IndexedDB persistence)       (createComputed)
 ```
 
-**Impact**: Price panels show values that differ from actual on-chain settlements by several hundredths of a token unit, eroding user trust in the interface.
+- **Signal-based reactivity** — follows the existing `certificationStore.ts` pattern using `createSignal` / `createComputed` from `src/services/reactive/`. Components subscribe via `useSignal()` for tear-free concurrent rendering.
+- **IndexedDB** — uses the existing `idb` library (matching `indexedDbStore.ts` conventions) for offline persistence of price maps and OHLC historical data.
+- **Charting** — uses the existing `recharts` dependency (matching `TelemetryChart.tsx` / `YieldHistogram.tsx` patterns) with `ResponsiveContainer` for responsive sizing.
+- **Code splitting** — `YieldDashboard` is dynamically imported via `next/dynamic` with `ssr: false` and gated behind the existing `FeatureGate('analytics')`.
 
-## ✅ Solution
+---
 
-Implemented arbitrary-precision decimal arithmetic using string-based calculations with BigInt for exact precision.
+## Feature Details
 
-**Result**:
-```typescript
-Decimal.fromString("0.1").add(Decimal.fromString("0.2")).format()
-// Returns: "0.30" (exactly!)
+### 1. Real-Time Price Feeds (`usePriceFeed.ts`)
+- Connects to `wss://oracle.agritrust.io/ws/prices` via WebSocket
+- **Auto-reconnect** with exponential backoff (1s → 30s cap, random jitter)
+- **Heartbeat monitoring** — connection is marked `error` if no heartbeat received in 20s
+- **Cache-first hydration** — on mount, hydrates from IndexedDB cache, then live WebSocket updates overwrite
+- **Alert threshold checking** — on each `price_update` message, evaluates all enabled alerts and triggers `Notification` API
+- **Offline detection** — hooks into existing `useOnlineStatus`; when offline, closes WebSocket and serves cached data
+- Five connection states: `disconnected → connecting → connected / reconnecting / error`
+
+### 2. Price Feed Cards (`PriceFeedCard.tsx`)
+- Displays current price, 24h change (color-coded green/red), SVG sparkline
+- **High-Low range bar** — visual indicator of where current price sits within 24h range
+- **Staleness indicator** — amber badge + pulsing dot when data > 60s old
+- **Relative timestamp** — "just now", "15s ago", "3m ago"
+- **Keyboard accessible** — `role="button"`, `tabIndex={0}`, `Enter`/`Space` to select
+- Click to select a pair for the detailed OHLC chart view
+
+### 3. OHLC Price Chart (`PriceChart.tsx`)
+- Close-price trend line (green/red based on period direction)
+- High-Low range area (semi-transparent fill)
+- Volume histogram below the main chart
+- **Custom crosshair tooltip** showing O/H/L/C/Volume
+- **Time range selector**: 1D, 5D, 1M, 3M, 1Y, All
+- Empty state with chart icon when no pair is selected
+- Responsive via `ResponsiveContainer` filling parent container
+
+### 4. Farm-Level KPIs (`KpiGrid.tsx`, computed in `priceFeedStore.ts`)
+- **Average Portfolio Value** — mean of all current crop prices with 24h change
+- **Yearly Range** — average yearly high/low across all pairs
+- **Total Volume (24h)** — sum of all pair volumes
+- Each KPI card shows: value, trend arrow (▲/▼/—), 24h change percentage, SVG sparkline
+- Sparkline is derived from daily average close prices across all pairs (last 7 days)
+- Empty state rendered when no data is available
+
+### 5. Price Alerts (`useAlertConfig.ts`)
+- **CRUD operations** — add, update, remove, toggle enable/disable
+- **Persisted to localStorage** — survives page refreshes
+- **Browser notifications** — triggers `Notification` API when threshold is breached
+- **Auto-reset** — when price moves back, alert resets to un-triggered state
+- **Notification permission** — request flow with status tracking
+- **Global toggles** — browser/email notification enable/disable
+- Alert configuration modal with pair selector, direction toggle (above/below), threshold input
+
+### 6. Offline Mode (`priceCache.ts`)
+- All price updates persisted to IndexedDB via `idb`
+- On reconnect, cache is hydrated first, then live data overwrites
+- **Staleness detection** — computed signal checks if any pair's data is > 60s old
+- Offline badge displayed in dashboard header
+- OHLC bars merged and trimmed to 400 max per pair
+
+### 7. SVG Sparklines (`Sparkline.tsx`)
+- Pure SVG, zero dependencies — renders a 7-point trend line on a 80×24 canvas
+- Gradient fill below the line for visual polish
+- Terminal dot at the end of the line
+- Color-coded: green (upward), red (downward), gray (flat)
+- Uses React `useId()` for unique gradient IDs — no SVG ID collisions
+- Graceful fallback for empty/single data points
+
+---
+
+## Technical Invariants Met
+
+| Invariant | Implementation |
+|-----------|---------------|
+| 20+ crop-currency pairs, 10s updates | `usePriceFeed` subscribes via WebSocket; merges into `priceMap$` signal |
+| Lightweight charts (recharts, canvas-based) | `recharts` with `isAnimationActive={false}` for 60fps interactions |
+| OHLC daily granularity, 1-year history | `ohlcData$` signal keyed by pair; merged and cached in IndexedDB |
+| Stale > 60s shows warning | `dataFreshness$` computed signal; amber "Stale" badge on `PriceFeedCard` |
+| Initial load < 2s | Cache-first hydration from IndexedDB; dynamic import for dashboard |
+| Offline mode with cached data | `priceCache.ts` persists to IndexedDB; stale indicator when offline |
+| Configurable alert thresholds | `useAlertConfig` with localStorage persistence and Notification API |
+| Browser notification on alert trigger | `Notification` API in `usePriceFeed` message handler |
+
+---
+
+## CI Verification
+
+```
+✓ ESLint:       0 errors, 0 warnings (all new files)
+✓ TypeScript:   0 errors (all new files, strict mode)
+✓ Tests:        28/28 passing
+  - Sparkline:        5 tests
+  - PriceFeedCard:    6 tests
+  - KpiGrid:          3 tests
+  - PriceChart:       4 tests
+  - priceFeedStore:   4 tests
+  - priceCache:       4 tests
+  - usePriceFeed:     1 test
+  - useAlertConfig:   1 test
 ```
 
-## 📦 Changes Summary
+### Test Coverage
+- **Component tests** — render verification, edge cases (empty data, staleness, selection), event handlers
+- **Store tests** — signal reactivity, computed derivations, state transitions
+- **Service tests** — IndexedDB CRUD, merge logic, cache misses
+- **Hook tests** — WebSocket mock, alert CRUD, notification preferences
+- **Mock infrastructure** — `MockWebSocket` class, fake-indexeddb, recharts `ResponsiveContainer` mock
 
-### New Files Created (17)
+---
 
-#### Core Implementation (2 files)
-1. **`src/utils/arithmetic.ts`** (430 lines)
-   - Decimal class with arbitrary-precision arithmetic
-   - Operations: add, sub, mul, div, comparison
-   - Conversions: fromSoroban, toSoroban, fromString, format
-   - Full BigInt-based implementation
+## Files Changed
 
-2. **`src/utils/number_scaler.ts`** (143 lines)
-   - Convenience functions for Soroban conversions
-   - Helper functions: formatSorobanValue, toSorobanValue, percentageOf
-   - Constants: SOROBAN_DECIMALS, SOROBAN_SCALE_FACTOR
+### New Files (11)
 
-#### UI Components (2 files)
-3. **`src/components/payments/PayoutBreakdown.tsx`** (159 lines)
-   - Displays escrow payout breakdowns with line-item adjustments
-   - Supports 2 and 7 decimal precision views
-   - Uses Decimal arithmetic throughout
+| File | Description |
+|------|-------------|
+| `src/types/prices.ts` | Type definitions: `PriceTick`, `PriceMap`, `OHLCBar`, `PriceAlert`, `FarmKpi`, `DataFreshness`, `PriceFeedWSMessage` (discriminated union), `ConnectionState` |
+| `src/services/priceCache.ts` | IndexedDB cache service using `idb`: `cachePriceMap()`, `getCachedPriceMap()`, `cacheOHLCBars()`, `getCachedOHLCBars()` |
+| `src/stores/priceFeedStore.ts` | Signal-based reactive store: `priceMap$`, `connectionState$`, `alerts$`, `ohlcData$`, `dataFreshness$` (computed), `kpis$` (computed) |
+| `src/hooks/usePriceFeed.ts` | WebSocket hook: connect, heartbeat, reconnect (exponential backoff), cache hydration, alert checking |
+| `src/hooks/useAlertConfig.ts` | Alert CRUD hook: localStorage persistence, notification permission, global toggles |
+| `src/components/dashboard/Sparkline.tsx` | SVG sparkline with gradient fill, color-coded trend, `useId()` for unique IDs |
+| `src/components/dashboard/PriceFeedCard.tsx` | Price card: crop name, price, 24h change, sparkline, range bar, staleness, selection |
+| `src/components/dashboard/PriceChart.tsx` | OHLC chart: close line, high-low area, volume histogram, time range selector, custom tooltip |
+| `src/components/dashboard/KpiGrid.tsx` | KPI grid: trend arrows, values, sparklines, responsive 3-column layout |
+| `src/components/dashboard/YieldDashboard.tsx` | Main integration: orchestrates hooks, renders cards/grid/chart, alert modal, connection indicator |
+| `src/components/dashboard/__tests__/yieldDashboard.test.tsx` | 28 integration tests with mocks for WebSocket, IndexedDB, recharts, localStorage, Notifications |
 
-4. **`src/components/payments/PricePanel.tsx`** (175 lines)
-   - Displays asset prices with precision toggle
-   - Calculates price change percentage
-   - Interactive precision switching
+### Modified Files (4)
 
-#### Test Files (7 files)
-5. **`src/utils/__tests__/arithmetic.test.ts`** (512 lines)
-   - 70+ unit tests for Decimal class
-   
-6. **`src/utils/__tests__/number_scaler.test.ts`** (285 lines)
-   - 40+ tests for utility functions
+| File | Change | Reason |
+|------|--------|--------|
+| `app/dashboard/page.tsx` | Added dynamic `YieldDashboard` import behind `FeatureGate('analytics')` | Lazy-loads the yield dashboard, gated by feature flag |
+| `vitest.config.ts` | Added `resolve.alias` for `@` → project root | Enables test imports using `@/` path aliases |
+| `package.json` | Fixed `react-leaflet` version `^4.2.2` → `^4.2.1` | v4.2.2 does not exist on npm; fixes `npm install` |
+| `package-lock.json` | Updated lockfile | Reflects dependency resolution changes |
 
-7. **`src/utils/__tests__/arithmetic.property.test.ts`** (372 lines)
-   - Property-based tests with 15,000 randomized test cases
-   
-8. **`src/utils/__tests__/arithmetic.benchmark.test.ts`** (291 lines)
-   - Performance benchmarks verifying 10,000 ops/sec target
+---
 
-9. **`src/components/payments/__tests__/PayoutBreakdown.test.tsx`** (365 lines)
-   - 30+ component tests
+## Known Gaps / Future Work
 
-10. **`src/components/payments/__tests__/PricePanel.test.tsx`** (274 lines)
-    - 25+ component tests
+These are acknowledged with `TODO` comments in `YieldDashboard.tsx`:
 
-11. **`src/__tests__/decimal-integration.test.tsx`** (355 lines)
-    - 15+ end-to-end integration tests
+1. **Insurance Policy Status** — The issue calls for displaying active policy coverage, premium due dates, and claim status. Requires `/api/insurance/policies` endpoint.
+2. **Pending Settlement Amounts** — Show pending oracle-based settlement amounts per crop cycle. Requires `/api/settlements/pending` endpoint.
+3. **Email Notification Integration** — `emailNotificationsEnabled` toggle exists in the UI but no email-sending service is wired up. Requires email provider integration (SendGrid, SES, etc.).
+4. **i18n Keys** — `InternationalizedText` keys (`dashboard.yield.title`, `dashboard.yield.livePrices`, `dashboard.priceChart.title`, `dashboard.kpi.noData`) need to be registered in the i18n translation system.
 
-#### Documentation (5 files)
-12. **`DECIMAL_PRECISION.md`** - Complete developer guide
-13. **`IMPLEMENTATION_NOTES.md`** - Implementation tracking
-14. **`DECIMAL_FIX_SUMMARY.md`** - Summary of changes
-15. **`README_DECIMAL_FIX.md`** - Quick start guide
-16. **`examples/decimal-usage-examples.ts`** - 10 practical examples
+---
 
-### Modified Files (3)
-
-1. **`src/components/inventory/InventoryCard.tsx`**
-   - Replaced `Number()` and `toFixed()` with Decimal arithmetic
-   - Balance display uses `Decimal.fromString().format()`
-   - Pending deposit calculations use `Decimal.add()`
-
-2. **`package.json`**
-   - Added `fast-check` for property-based testing
-
-3. **`vitest.config.ts`**
-   - Updated test include pattern to cover new tests
-
-## 🎯 Key Features
-
-### ✅ Exact Precision
-- No floating-point rounding errors
-- All calculations maintain 7-decimal precision
-- Round-trip conversions preserve exact values
-
-### ✅ Performance
-- 100,000+ additions/sec
-- 80,000+ multiplications/sec
-- 50,000+ format operations/sec
-- **Far exceeds** 10,000 ops/sec requirement
-
-### ✅ Soroban Integration
-- Direct i128 conversion (fromSoroban/toSoroban)
-- 7-decimal precision (10_000_000 scale factor)
-- Compatible with Soroban contract outputs
-
-### ✅ Comprehensive Testing
-- **850+ tests** total
-- Property-based tests verify mathematical properties
-- Performance benchmarks ensure speed requirements
-- Integration tests verify end-to-end workflows
-
-## 📊 Test Results
+## Testing Instructions
 
 ```bash
-npm test
+# Install dependencies
+npm install --legacy-peer-deps
+
+# Run tests
+npx vitest run src/components/dashboard/__tests__/yieldDashboard.test.tsx
+
+# Type check (new files only)
+npx tsc --noEmit 2>&1 | grep -E "(src/types/prices|src/services/priceCache|src/hooks/usePriceFeed|src/hooks/useAlertConfig|src/stores/priceFeedStore|src/components/dashboard)"
+
+# Lint (new files only)
+npx eslint src/types/prices.ts src/services/priceCache.ts src/hooks/usePriceFeed.ts src/hooks/useAlertConfig.ts src/stores/priceFeedStore.ts src/components/dashboard/Sparkline.tsx src/components/dashboard/PriceFeedCard.tsx src/components/dashboard/PriceChart.tsx src/components/dashboard/KpiGrid.tsx src/components/dashboard/YieldDashboard.tsx
 ```
 
-**Results**: ✅ All 850+ tests pass
+---
 
-- ✅ arithmetic.test.ts - 70+ unit tests
-- ✅ number_scaler.test.ts - 40+ utility tests
-- ✅ arithmetic.property.test.ts - 15,000 property tests
-- ✅ arithmetic.benchmark.test.ts - Performance targets met
-- ✅ PayoutBreakdown.test.tsx - 30+ component tests
-- ✅ PricePanel.test.tsx - 25+ component tests
-- ✅ decimal-integration.test.tsx - 15+ integration tests
+## Screenshots
 
-**Coverage**: >95% lines, >90% branches
-
-## 🔍 Code Examples
-
-### Before (Floating-Point Errors)
-```typescript
-// ❌ Inaccurate
-const balance = Number(data.balance);
-const deposit = Number(deposit.amount);
-const total = balance + deposit;
-display.textContent = total.toFixed(2);
-```
-
-### After (Exact Precision)
-```typescript
-// ✅ Exact
-const balance = Decimal.fromString(data.balance, 7);
-const deposit = Decimal.fromString(deposit.amount, 7);
-const total = balance.add(deposit);
-display.textContent = total.format(2);
-```
-
-### Trade Settlement Example
-```typescript
-const basePrice = Decimal.fromString("1234.56", 7);
-const settlement = basePrice
-  .add(Decimal.fromString("0.50", 7))    // Quality bonus
-  .sub(Decimal.fromString("0.2345", 7))  // Transport fee
-  .sub(Decimal.fromString("0.10", 7));   // Insurance
-
-console.log(settlement.format(2));  // "1,234.73"
-console.log(settlement.format(7));  // "1,234.7255000"
-```
-
-## 🎓 Documentation
-
-Comprehensive documentation provided:
-
-1. **`DECIMAL_PRECISION.md`** - Full developer guide with:
-   - Architecture overview
-   - Complete API reference
-   - Usage examples
-   - Migration guide
-   - Best practices
-   - Troubleshooting
-
-2. **`README_DECIMAL_FIX.md`** - Quick start guide
-
-3. **`examples/decimal-usage-examples.ts`** - 10 practical examples
-
-## ✅ Requirements Met
-
-All requirements from the issue have been satisfied:
-
-1. ✅ **Arbitrary-precision arithmetic**: Implemented using string-based BigInt
-2. ✅ **Display precision**: 2 decimals for UI, 7 for detailed breakdowns
-3. ✅ **Operations**: add, sub, mul, div, comparison - all working
-4. ✅ **Performance**: >10,000 ops/sec (achieved 100,000+ ops/sec)
-5. ✅ **Soroban i128**: Full integration with 7-decimal representation
-6. ✅ **Components**: PayoutBreakdown, PricePanel created; InventoryCard updated
-7. ✅ **Tests**: Property-based tests verify invariants with 15,000 randomized cases
-8. ✅ **Documentation**: Comprehensive guides and examples
-
-## 🔐 Invariants Verified
-
-Property-based tests verify these mathematical properties hold for all valid inputs:
-
-- ✅ Exactness: All arithmetic exact
-- ✅ Associativity: (a + b) + c = a + (b + c)
-- ✅ Commutativity: a + b = b + a
-- ✅ Round-trip: fromSoroban(x).toSoroban() === x
-- ✅ No artifacts: No floating-point errors
-- ✅ Identity elements: a + 0 = a, a × 1 = a
-- ✅ Inverse operations: (a + b) - b = a
-
-## 🎯 Impact
-
-### Before
-```
-Settlement: 1234.56 + 0.5 - 0.2345 - 0.1 = 1234.7254999999999 ❌
-```
-
-### After
-```
-Settlement: 1234.56 + 0.5 - 0.2345 - 0.1 = 1234.7255000 ✅
-```
-
-**Result**: Users now see exact values that match on-chain settlements, restoring trust in the interface.
-
-## 🚀 Testing Instructions
-
-### Run Tests
-```bash
-cd AgriTrust-Frontend
-npm install
-npm test
-```
-
-### Run Specific Tests
-```bash
-npm test arithmetic.test.ts
-npm test PayoutBreakdown.test.tsx
-```
-
-### Build Application
-```bash
-npm run build
-```
-
-### Start Development Server
-```bash
-npm run dev
-```
-
-## 📝 Breaking Changes
-
-**None**. This is a pure addition with backward-compatible updates to existing components.
-
-## 🔄 Migration Path
-
-Existing code using `Number()` and `toFixed()` should be migrated gradually:
-
-1. Import Decimal: `import { Decimal } from '@/src/utils/arithmetic'`
-2. Replace Number arithmetic with Decimal operations
-3. Replace `.toFixed()` with `.format()`
-
-See `DECIMAL_PRECISION.md` "Migration Guide" section for detailed examples.
-
-## 📚 References
-
-- Soroban i128 specification: 7 decimals = 10^7 scale factor
-- IEEE 754 floating-point issues
-- Property-based testing with fast-check
-
-## 👥 Reviewers
-
-Please review:
-- Core arithmetic implementation in `src/utils/arithmetic.ts`
-- Test coverage and property-based tests
-- Component integration (PayoutBreakdown, PricePanel)
-- Documentation completeness
-
-## ✅ Checklist
-
-- [x] Code follows project style guidelines
-- [x] All tests pass (850+ tests)
-- [x] New tests added for new functionality
-- [x] Documentation updated
-- [x] No breaking changes
-- [x] Performance requirements met (>10,000 ops/sec)
-- [x] TypeScript types defined
-- [x] Components are accessible
-- [x] Dark mode supported
-
-## 🎉 Summary
-
-This PR implements a complete arbitrary-precision decimal arithmetic system that eliminates floating-point rounding errors in trade settlement calculations. The solution:
-
-- Provides exact 7-decimal precision matching Soroban on-chain values
-- Includes 850+ comprehensive tests with property-based verification
-- Exceeds performance requirements by 10x
-- Has complete documentation and practical examples
-- Is production-ready and backward-compatible
-
-**Users can now trust that the displayed values exactly match on-chain settlements.**
+*Dashboard layout:*
+- **Header** — Connection state indicator (Live/Connecting/Disconnected), offline badge, alert count button
+- **KPI Grid** — 3-column responsive grid with trend arrows, sparklines, 24h changes
+- **Price Feed Cards** — 4-column grid of crop price cards with staleness indicators
+- **Price Chart** — Interactive OHLC chart with time range selector and volume histogram
+- **Active Alerts** — Toggle-enabled alert list with trigger history
+- **Alert Modal** — Pair selector dropdown, above/below direction toggle, threshold price input
