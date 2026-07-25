@@ -1,0 +1,50 @@
+{
+  "title": "AgriTrust Distributed Job Scheduler",
+  "schemaVersion": 39,
+  "tags": ["agritrust", "scheduler", "leases"],
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Claim latency P99",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(scheduler_claim_duration_ms_bucket[5m])) by (le, queue))",
+          "legendFormat": "{{queue}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms", "max": 100 } }
+    },
+    {
+      "type": "stat",
+      "title": "Scheduler availability",
+      "targets": [
+        {
+          "expr": "avg_over_time(scheduler_available[5m])",
+          "legendFormat": "availability"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0.999, "max": 1 } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Oldest queued job age",
+      "targets": [
+        {
+          "expr": "max by (queue) (scheduler_oldest_queued_job_age_seconds)",
+          "legendFormat": "{{queue}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Expired lease rate",
+      "targets": [
+        {
+          "expr": "sum(rate(scheduler_expired_leases_total[5m])) by (queue)",
+          "legendFormat": "{{queue}}"
+        }
+      ]
+    }
+  ]
+}

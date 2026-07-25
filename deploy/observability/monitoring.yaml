@@ -31,3 +31,38 @@ spec:
           labels: { severity: page, service: agritrust-frontend }
           annotations:
             summary: "An AgriTrust frontend track has no ready pods"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: agritrust-job-scheduler-rules
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: agritrust-job-scheduler
+      rules:
+        - alert: JobSchedulerClaimLatencyHigh
+          expr: histogram_quantile(0.99, sum(rate(scheduler_claim_duration_ms_bucket[5m])) by (le, queue)) > 100
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: Scheduler claim P99 is above 100 ms
+            runbook_url: https://docs.agritrust.example/runbooks/distributed-job-scheduler
+        - alert: JobSchedulerAvailabilityLow
+          expr: avg_over_time(scheduler_available[5m]) < 0.9999
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Scheduler availability is below 99.99%
+            runbook_url: https://docs.agritrust.example/runbooks/distributed-job-scheduler
+        - alert: JobSchedulerQueueAgeHigh
+          expr: max by (queue) (scheduler_oldest_queued_job_age_seconds) > 60
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: Scheduler queue age exceeds 60 seconds
+            runbook_url: https://docs.agritrust.example/runbooks/distributed-job-scheduler
