@@ -1,5 +1,15 @@
 import { InternationalizedText } from "@/src/components/common/InternationalizedText";
 import { WeatherPlanner } from "@/src/components/dashboard/WeatherPlanner";
+import { FeatureGate } from "@/src/components/resilience/ResilienceProvider";
+import dynamic from "next/dynamic";
+
+const YieldDashboard = dynamic(
+  () =>
+    import("@/src/components/dashboard/YieldDashboard").then(
+      (m) => ({ default: m.YieldDashboard }),
+    ),
+  { ssr: false },
+);
 
 export default function DashboardPage() {
   return (
@@ -36,6 +46,9 @@ export default function DashboardPage() {
         </div>
       </div>
       <WeatherPlanner />
+      <FeatureGate feature="analytics">
+        <YieldDashboard />
+      </FeatureGate>
     </div>
   );
 }
