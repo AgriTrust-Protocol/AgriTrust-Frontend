@@ -3,6 +3,31 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --muted: #525252;
+  --surface: #f5f5f5;
+  --border: #d4d4d4;
+  --primary: #0050b3;
+  --primary-foreground: #ffffff;
+  --success: #1a7d36;
+  --warning: #b8860b;
+  --danger: #b30000;
+  --link: #0033cc;
+  --focus-ring: #0033cc;
+}
+
+:root[data-theme="highContrastLight"] {
+  --background: #ffffff;
+  --foreground: #000000;
+  --muted: #111111;
+  --surface: #f7f7f7;
+  --border: #bdbdbd;
+  --primary: #0050b3;
+  --primary-foreground: #ffffff;
+  --success: #1a7d36;
+  --warning: #b8860b;
+  --danger: #b30000;
+  --link: #0033cc;
+  --focus-ring: #0033cc;
 }
 
 @theme inline {
@@ -12,17 +37,35 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--background);
+  color: var(--foreground);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+}
+
+*:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
 
 /* Optimistic update pulsing animation for pending items */

@@ -3,6 +3,7 @@ import { LoadingBoundary } from "@/components/loading/LoadingBoundary";
 import { DashboardWalletBoundary } from "@/src/components/wallet/DashboardWalletBoundary";
 import { InternationalizedText } from "@/src/components/common/InternationalizedText";
 import { LocaleSwitcher } from "@/src/components/common/LocaleSwitcher";
+import { ThemeToggle } from "@/src/components/layout/ThemeToggle";
 import { FeatureGate } from "@/src/components/resilience/ResilienceProvider";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -24,18 +25,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </a>
             <FeatureGate feature="analytics">
               <a
-              href="/dashboard/analytics"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              <InternationalizedText id="nav.analytics" />
+                href="/dashboard/analytics"
+                className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                <InternationalizedText id="nav.analytics" />
               </a>
             </FeatureGate>
             <FeatureGate feature="maps">
               <a
-              href="/dashboard/maps"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              <InternationalizedText id="nav.maps" />
+                href="/dashboard/maps"
+                className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                <InternationalizedText id="nav.maps" />
               </a>
             </FeatureGate>
             <a
@@ -63,6 +64,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <InternationalizedText id="nav.devices" />
             </a>
             <LocaleSwitcher />
+            <ThemeToggle />
           </div>
         </nav>
       </header>

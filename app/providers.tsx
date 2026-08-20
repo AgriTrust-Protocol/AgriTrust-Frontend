@@ -10,10 +10,11 @@ import { preloadCircuits } from "@/src/services/zkp/bootstrap";
 import { registerServiceWorker } from "@/src/services/swRegistration";
 import { WebVitalsReporter } from "@/lib/webVitals";
 import { ResilienceProvider, useResilience } from "@/src/components/resilience/ResilienceProvider";
+import { ThemeProvider } from "@/src/components/providers/ThemeProvider";
+import { TracingProvider } from "@/src/services/observability/TracingProvider";
 
 function ResilienceBootstrap({ children }: { children: ReactNode }) {
   const { isEnabled } = useResilience();
-import { TracingProvider } from "@/src/services/observability/TracingProvider";
 
   useEffect(() => {
     // These non-critical warmups are the first work removed under load.
@@ -29,11 +30,17 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <WebVitalsReporter />
       <TracingProvider />
-      <LocaleProvider>
-        <WalletProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </WalletProvider>
-      </LocaleProvider>
+      <ThemeProvider>
+        <LocaleProvider>
+          <WalletProvider>
+            <AuthProvider>
+              <ResilienceProvider>
+                <ResilienceBootstrap>{children}</ResilienceBootstrap>
+              </ResilienceProvider>
+            </AuthProvider>
+          </WalletProvider>
+        </LocaleProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
