@@ -47,6 +47,7 @@ interface AgriTrustDB extends DBSchema {
 const DB_NAME = "agritrust-offline";
 const DB_VERSION = 1;
 const MAX_QUEUE_SIZE = 500;
+const REQUESTED_STORAGE_BYTES = 200 * 1024 * 1024;
 
 let dbPromise: Promise<IDBPDatabase<AgriTrustDB>> | null = null;
 
@@ -196,12 +197,17 @@ export async function getStorageUsage(): Promise<{
   percent: number;
 }> {
   if (typeof navigator !== "undefined" && navigator.storage?.estimate) {
-    const { usage = 0, quota = 50 * 1024 * 1024 } =
+    const { usage = 0, quota = REQUESTED_STORAGE_BYTES } =
       await navigator.storage.estimate();
     const total = quota;
     return { used: usage, total, percent: (usage / total) * 100 };
   }
-  return { used: 0, total: 50 * 1024 * 1024, percent: 0 };
+  return { used: 0, total: REQUESTED_STORAGE_BYTES, percent: 0 };
+}
+
+export async function requestPersistentStorage(): Promise<boolean> {
+  if (typeof navigator === "undefined" || !navigator.storage?.persist) return false;
+  return navigator.storage.persist();
 }
 
 export async function getTotalAuditCount(): Promise<number> {
