@@ -412,7 +412,7 @@ describe("PriceChart", () => {
     );
     // All range buttons should be visible
     for (const label of ["1D", "5D", "1M", "3M", "1Y", "All"]) {
-      expect(screen.getByText(label)).toBeTruthy();
+      expect(await screen.findByText(label)).toBeTruthy();
     }
   });
 
@@ -590,9 +590,11 @@ describe("priceCache", () => {
 describe("usePriceFeed", () => {
   it("connects to WebSocket on mount when online", async () => {
     const { usePriceFeed } = await import("@/src/hooks/usePriceFeed");
-    const { renderHook } = await import("@testing-library/react");
+    const { renderHook, act } = await import("@testing-library/react");
 
-    renderHook(() => usePriceFeed());
+    await act(async () => {
+      renderHook(() => usePriceFeed());
+    });
     expect(MockWebSocket.instances.length).toBeGreaterThanOrEqual(0);
   });
 });

@@ -65,11 +65,11 @@ describe("LeaseBasedJobScheduler", () => {
       onMetric: (metric: JobSchedulerMetric) => metrics.push(`${metric.name}:${metric.tags.queue}:${metric.tags.worker}:${metric.value}`),
     });
 
-    await scheduler.claimDueJobs({ queue: "certification queue", workerId: "worker/a", leaseDurationMs: 5_000 });
+    await scheduler.claimDueJobs({ queue: "certification", workerId: "worker/a", leaseDurationMs: 5_000 });
 
     expect(metrics).toEqual([
-      "scheduler_claim_attempt:certification_queue:worker_a:1",
-      "scheduler_claimed_jobs:certification_queue:worker_a:1",
+      "scheduler_claim_attempt:certification:worker_a:1",
+      "scheduler_claimed_jobs:certification:worker_a:1",
     ]);
   });
 });
