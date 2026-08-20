@@ -42,5 +42,3 @@ export function InternationalizedText({
   const Tag = as;
   return <Tag className={className}>{text}</Tag>;
 }
-
-export default InternationalizedText;
