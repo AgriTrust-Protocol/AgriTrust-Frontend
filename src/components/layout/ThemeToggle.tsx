@@ -22,5 +22,3 @@ export function ThemeToggle() {
     </button>
   );
 }
-
-export default ThemeToggle;
