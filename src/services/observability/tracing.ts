@@ -24,6 +24,22 @@ interface Span {
   status?: { code: number; message?: string };
 }
 
+export function recordSpan(
+  name: string,
+  context: TraceContext,
+  attributes: Record<string, string | number | boolean>,
+  errorMessage?: string,
+): void {
+  enqueue({
+    name,
+    context,
+    startTimeUnixNano: nowUnixNano(),
+    endTimeUnixNano: nowUnixNano(),
+    attributes,
+    ...(errorMessage ? { status: { code: 2, message: errorMessage } } : { status: { code: 1 } }),
+  });
+}
+
 const TRACEPARENT = "traceparent";
 const TRACESTATE = "tracestate";
 const MAX_QUEUE_SIZE = 200;

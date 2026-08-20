@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { saveAuditOffline } from "@/src/services/indexedDbStore";
+import { createDraftAutoSaver } from "@/src/offline/FormStore";
 import { useOfflineSync } from "@/src/hooks/useOfflineSync";
 import { useLocale } from "@/src/hooks/useLocale";
 import { InternationalizedText } from "@/src/components/common/InternationalizedText";
@@ -32,10 +33,24 @@ export default function AuditForm() {
   const [submitting, setSubmitting] = useState(false);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const draftSaverRef = useRef<ReturnType<typeof createDraftAutoSaver> | null>(null);
 
   const { isOnline, storageUsage, refreshStats } = useOfflineSync();
 
   const isStorageFull = storageUsage.percent > 95;
+
+  useEffect(() => {
+    const saver = createDraftAutoSaver<AuditFormData>("inspector-audit", undefined);
+    draftSaverRef.current = saver;
+    return () => {
+      void saver.flush();
+      saver.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    draftSaverRef.current?.schedule(form);
+  }, [form]);
 
   const handlePhotoChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
