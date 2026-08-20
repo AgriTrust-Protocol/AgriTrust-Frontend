@@ -9,6 +9,8 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    globals: true,
+    exclude: ["**/node_modules/**", "**/dist/**", "tests/**/*.spec.ts", "tests/scripts/**", "scripts/**"],
     setupFiles: ["./vitest.setup.ts", "vitest-canvas-mock"],
     testTimeout: 15000,
     coverage: {

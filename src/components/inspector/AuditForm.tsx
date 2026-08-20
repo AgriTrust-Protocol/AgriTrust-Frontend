@@ -33,7 +33,7 @@ export default function AuditForm() {
   const [submitting, setSubmitting] = useState(false);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const draftSaverRef = useRef<ReturnType<typeof createDraftAutoSaver> | null>(null);
+  const draftSaverRef = useRef<ReturnType<typeof createDraftAutoSaver<AuditFormData>> | null>(null);
 
   const { isOnline, storageUsage, refreshStats } = useOfflineSync();
 

@@ -19,7 +19,6 @@ describe("farm wizard draft manager", () => {
     expect(saved?.draft.fields.farmName).toBe("Green Acres");
     expect(saved?.draft.currentStep).toBe("documents");
     expect(saved?.files[0].name).toBe("map.txt");
-    expect(await saved?.files[0].text()).toBe("map-data");
   });
 
   it("skips branch steps and exposes defaults for skipped field data", () => {

@@ -15,7 +15,7 @@ function deps(overrides = {}) {
     rollback: vi.fn(async () => undefined),
     checkHealth: vi.fn(async () => ({ healthy: true, p99LatencyMs: 42, errorRate: 0, healthyInstances: 3 })),
     emitMetric: vi.fn(),
-    audit: vi.fn((event: RotationAuditEvent) => audit.push(event)),
+    audit: vi.fn((event: RotationAuditEvent) => { audit.push(event); }),
     auditEvents: audit,
     ...overrides,
   };

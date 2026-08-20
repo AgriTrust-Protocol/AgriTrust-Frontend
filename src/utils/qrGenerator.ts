@@ -1,3 +1,6 @@
+import QRCode from "qrcode";
+import pako from "pako";
+
 export const generateQrDataUrl = async (payload: object, expiresIn: number): Promise<string> => {
   const jsonStr = JSON.stringify(payload);
   // compress using pako (browser version) - already imported in component
