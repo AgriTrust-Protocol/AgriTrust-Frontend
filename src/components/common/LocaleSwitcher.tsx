@@ -37,5 +37,3 @@ export function LocaleSwitcher() {
     </label>
   );
 }
-
-export default LocaleSwitcher;

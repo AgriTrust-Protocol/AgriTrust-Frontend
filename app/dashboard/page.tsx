@@ -1,7 +1,9 @@
+"use client";
 import { InternationalizedText } from "@/src/components/common/InternationalizedText";
 import { WeatherPlanner } from "@/src/components/dashboard/WeatherPlanner";
 import { FeatureGate } from "@/src/components/resilience/ResilienceProvider";
 import dynamic from "next/dynamic";
+// import { use } from "react";
 
 const YieldDashboard = dynamic(
   () =>
