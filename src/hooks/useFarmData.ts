@@ -75,7 +75,6 @@ export function useFarmData({
       cancelled = true;
     };
     // sortingKey/filterKey stand in for sorting/filterGroup identity
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [farmId, page, pageSize, sortingKey, filterKey]);
 
   return { data, isLoading, error };

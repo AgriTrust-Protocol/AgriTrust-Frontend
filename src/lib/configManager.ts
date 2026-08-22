@@ -15,7 +15,7 @@ export const runtimeConfigSchema = z.object({
 });
 
 export type RuntimeConfig = ReturnType<typeof runtimeConfigSchema.parse>;
-export type ConfigSource<T> = () => Promise<unknown> | unknown;
+export type ConfigSource<T> = () => Promise<T> | T;
 export type ConfigListener<T> = (snapshot: ConfigSnapshot<T>) => void;
 
 export interface ConfigSnapshot<T> {

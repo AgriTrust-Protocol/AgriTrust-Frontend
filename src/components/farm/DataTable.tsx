@@ -39,7 +39,7 @@ export function DataTable({ farmId }: DataTableProps) {
   const { role, isLoading: roleLoading } = useFarmRole(farmId);
   const [page, setPage] = useState(0);
   const [sorting, setSorting] = useState<SortState[]>([]);
-  const [filterGroup, setFilterGroup] = useState<FilterGroup>({
+  const [filterGroup] = useState<FilterGroup>({
     operator: "AND",
     filters: [],
   });
@@ -71,6 +71,7 @@ export function DataTable({ farmId }: DataTableProps) {
 
   const rows = data?.rows ?? [];
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: rows,
     columns,
