@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { WalletConnector } from "@/src/components/wallet/WalletConnector";
@@ -16,7 +16,7 @@ describe("WalletConnector", () => {
       account: null,
       connect: mockConnect,
       disconnect: vi.fn(),
-    } as any);
+    } as unknown as useWalletModule.UseWalletSyncReturn);
 
     render(<WalletConnector />);
     
@@ -35,7 +35,7 @@ describe("WalletConnector", () => {
       account: null,
       connect: mockConnect,
       disconnect: vi.fn(),
-    } as any);
+    } as unknown as useWalletModule.UseWalletSyncReturn);
 
     render(<WalletConnector />);
     
@@ -52,7 +52,7 @@ describe("WalletConnector", () => {
       account: { address: "0x123" },
       connect: vi.fn(),
       disconnect: mockDisconnect,
-    } as any);
+    } as unknown as useWalletModule.UseWalletSyncReturn);
 
     render(<WalletConnector />);
     
