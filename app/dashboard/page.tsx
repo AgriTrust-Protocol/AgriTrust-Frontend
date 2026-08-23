@@ -1,6 +1,7 @@
 "use client";
 import { InternationalizedText } from "@/src/components/common/InternationalizedText";
 import { WeatherPlanner } from "@/src/components/dashboard/WeatherPlanner";
+import { CertificateActions } from "@/src/components/dashboard/CertificateActions";
 import { FeatureGate } from "@/src/components/resilience/ResilienceProvider";
 import dynamic from "next/dynamic";
 // import { use } from "react";
@@ -48,6 +49,7 @@ export default function DashboardPage() {
         </div>
       </div>
       <WeatherPlanner />
+      <CertificateActions />
       <FeatureGate feature="analytics">
         <YieldDashboard />
       </FeatureGate>
