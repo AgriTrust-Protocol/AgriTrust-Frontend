@@ -12,13 +12,11 @@ import { WebVitalsReporter } from "@/lib/webVitals";
 import { ResilienceProvider, useResilience } from "@/src/components/resilience/ResilienceProvider";
 import { ThemeProvider } from "@/src/components/providers/ThemeProvider";
 import { TracingProvider } from "@/src/services/observability/TracingProvider";
-import { requestPersistentStorage } from "@/src/hooks/useOfflineStatus";
 
 function ResilienceBootstrap({ children }: { children: ReactNode }) {
   const { isEnabled } = useResilience();
 
   useEffect(() => {
-    void requestPersistentStorage();
     // These non-critical warmups are the first work removed under load.
     if (isEnabled("zkpCircuitPreload")) void preloadCircuits();
     if (isEnabled("serviceWorker")) void registerServiceWorker();
