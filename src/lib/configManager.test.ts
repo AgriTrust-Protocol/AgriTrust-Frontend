@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createRuntimeConfigManager, parseRuntimeConfig } from "./configManager";
+import { createRuntimeConfigManager, parseRuntimeConfig, type RuntimeConfig } from "./configManager";
 
 describe("runtime configuration management", () => {
   it("applies defaults and validates feature flag names", () => {
@@ -39,7 +39,7 @@ describe("runtime configuration management", () => {
     const failures = vi.fn();
     const manager = createRuntimeConfigManager(
       { environment: "staging", featureFlags: { maps: true } },
-      () => ({ environment: "qa", featureFlags: { maps: false } }),
+      (() => ({ environment: "qa", featureFlags: { maps: false } })) as unknown as () => RuntimeConfig,
       failures,
     );
 
