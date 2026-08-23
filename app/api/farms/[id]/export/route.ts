@@ -215,7 +215,7 @@ export async function GET(
   const pageRows = allFiltered.slice(start, start + pageSize);
 
   const pdfBuffer = toPdf(pageRows, columns);
-  return new NextResponse(pdfBuffer, {
+  return new NextResponse(pdfBuffer as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": 'attachment; filename="farm-export.pdf"',
