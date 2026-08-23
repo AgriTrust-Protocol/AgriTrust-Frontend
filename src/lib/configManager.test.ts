@@ -39,7 +39,15 @@ describe("runtime configuration management", () => {
     const failures = vi.fn();
     const manager = createRuntimeConfigManager(
       { environment: "staging", featureFlags: { maps: true } },
-      () => ({ environment: "qa", featureFlags: { maps: false } }),
+      () => ({
+        schemaVersion: "2026-07-19",
+        environment: "qa",
+        releaseColor: "blue",
+        capacityLevel: "normal",
+        criticalPathP99TargetMs: 100,
+        // Invalid key name -> rejected by validation.
+        featureFlags: { "Bad Flag": false },
+      }),
       failures,
     );
 

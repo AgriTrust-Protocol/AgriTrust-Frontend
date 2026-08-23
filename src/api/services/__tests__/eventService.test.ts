@@ -176,7 +176,10 @@ describe("connectEventStream", () => {
 
   it("reports malformed JSON through onError without throwing", () => {
     const onError = vi.fn();
-    const dispose = connectEventStream("/api/v1/events/stream", { onError });
+    const dispose = connectEventStream("/api/v1/events/stream", {
+      onEvent: vi.fn(),
+      onError,
+    });
 
     const source = MockEventSource.instances[0];
     expect(() =>

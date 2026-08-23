@@ -22,6 +22,13 @@ import type { Action, Resource, Role } from "@/src/types/auth";
 
 export type PermissionFallbackMode = "hide" | "disable" | "redirect";
 
+export interface PermissionContext {
+  /** Predicate evaluated against the effective role. */
+  can: (resource: Resource, action: Action) => boolean;
+  /** Effective role for the connected wallet (null when anonymous). */
+  role: Role | null;
+}
+
 export interface PermissionGateProps {
   /** Resource being accessed. */
   resource: Resource;
@@ -32,10 +39,10 @@ export interface PermissionGateProps {
   /** Destination used by the `"redirect"` mode. */
   redirectTo?: string;
   /**
-   * Elements to gate, or a render prop receiving
-   * `(ctx: { can: (resource, action) => boolean; role })` for bespoke UI decisions.
+   * Elements to gate, or a render prop receiving the `PermissionContext`
+   * for bespoke UI decisions.
    */
-  children: ReactNode;
+  children: ReactNode | ((ctx: PermissionContext) => ReactNode);
 }
 
 export function PermissionGate({
@@ -58,14 +65,7 @@ export function PermissionGate({
   if (allowed) {
     return (
       <>
-        {typeof children === "function"
-          ? (
-              children as (ctx: {
-                can: (resource: Resource, action: Action) => boolean;
-                role: Role | null;
-              }) => ReactNode
-            )({ can, role })
-          : children}
+        {typeof children === "function" ? children({ can, role }) : children}
       </>
     );
   }
