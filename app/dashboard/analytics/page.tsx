@@ -14,6 +14,16 @@ const YieldHistogram = dynamic(
   { ssr: false, loading: () => <div className="h-[380px] animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-700" /> },
 );
 
+const AnalyticsTable = dynamic(
+  () => import("@/src/components/dashboard/AnalyticsTable").then((m) => ({ default: m.AnalyticsTable })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[400px] animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-700" />
+    ),
+  }
+);
+
 export default function AnalyticsPage() {
   return (
     <FeatureGate
@@ -26,6 +36,18 @@ export default function AnalyticsPage() {
           <TelemetryChart />
           <YieldHistogram />
         </div>
+        {/* Worker-powered analytics table — all processing runs off the main thread */}
+        <section aria-labelledby="analytics-table-heading">
+          <h2
+            id="analytics-table-heading"
+            className="mb-3 text-sm font-medium text-zinc-500 dark:text-zinc-400"
+          >
+            Seasonal Yield Data
+          </h2>
+          {/* AnalyticsTable accepts a `data` prop with FarmRow[].
+              Supply real data via a parent data-fetch hook in production. */}
+          <AnalyticsTable data={[]} />
+        </section>
       </div>
     </FeatureGate>
   );
