@@ -51,9 +51,11 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
     "fake-indexeddb": "^6.2.5",
+    "jsdom": "^30.0.1",
     "msw": "^2.15.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "vitest-canvas-mock": "^1.1.5"
   }
 }
