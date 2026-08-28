@@ -1,0 +1,44 @@
+/* src/components/supplychain/TierTreeView.css */
+.tier-tree-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0e1116;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tier-tree-view__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #1a2029;
+  font-size: 12px;
+  color: #8b93a1;
+}
+
+.tier-tree-view__scroll-top {
+  background: transparent;
+  border: 1px solid #1f2733;
+  color: #d9dee3;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.tier-tree-view__scroll-top:hover {
+  border-color: #4a90e2;
+}
+
+.tier-tree-view__scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  contain: strict; /* helps the browser skip layout/paint work outside the viewport */
+}
+
+.tier-tree-view__spacer {
+  position: relative;
+  width: 100%;
+}
