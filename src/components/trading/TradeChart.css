@@ -1,0 +1,27 @@
+/* src/components/trading/TradeChart.css */
+.tradechart {
+  display: flex;
+  flex-direction: column;
+  background: #0e1116;
+  border-radius: 8px;
+  padding: 8px;
+  flex: 1;
+  min-height: 320px;
+}
+
+.tradechart__header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 8px 4px;
+}
+
+.tradechart__mid {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: #d9dee3;
+}
+
+.tradechart__canvas {
+  flex: 1;
+  width: 100%;
+}

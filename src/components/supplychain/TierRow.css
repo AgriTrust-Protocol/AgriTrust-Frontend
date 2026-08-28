@@ -1,0 +1,119 @@
+/* src/components/supplychain/TierRow.css */
+.tier-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border-bottom: 1px solid #1a2029;
+  background: #0e1116;
+  color: #d9dee3;
+}
+
+.tier-row__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding-right: 12px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.tier-row__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  background: transparent;
+  color: #8b93a1;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: transform 180ms ease;
+  flex-shrink: 0;
+}
+.tier-row__toggle.is-expanded {
+  transform: rotate(90deg);
+}
+.tier-row__toggle:hover {
+  background: #1a2029;
+  color: #d9dee3;
+}
+.tier-row__toggle-spacer {
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.tier-row__role {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.tier-row__role--producer {
+  color: #1fae6b;
+  background: rgba(31, 174, 107, 0.14);
+}
+.tier-row__role--processor {
+  color: #4a90e2;
+  background: rgba(74, 144, 226, 0.14);
+}
+.tier-row__role--distributor {
+  color: #e0a94d;
+  background: rgba(224, 169, 77, 0.14);
+}
+.tier-row__role--retailer {
+  color: #c15fe0;
+  background: rgba(193, 95, 224, 0.14);
+}
+
+.tier-row__name {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tier-row__meta {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.tier-row__meta-item {
+  font-size: 11px;
+  color: #6b7480;
+  display: flex;
+  gap: 4px;
+}
+.tier-row__meta-key {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.tier-row__meta-value {
+  color: #a9b0bb;
+}
+
+/*
+ * Animated expand/collapse cue using CSS grid-template-rows, per spec.
+ * A 0-height grid track animates open to 1fr rather than animating
+ * `height` directly (which can't transition to/from `auto` reliably).
+ */
+.tier-row__collapse-hint {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 200ms ease;
+}
+.tier-row__collapse-hint.is-open {
+  grid-template-rows: 1fr;
+}
+.tier-row__collapse-hint-inner {
+  overflow: hidden;
+  min-height: 0;
+}

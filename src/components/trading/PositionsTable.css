@@ -1,0 +1,67 @@
+/* src/components/trading/PositionsTable.css */
+.positions {
+  background: #0e1116;
+  border-radius: 8px;
+  padding: 12px;
+  color: #d9dee3;
+}
+
+.positions h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.positions--empty p {
+  font-size: 12px;
+  color: #6b7480;
+  margin: 0;
+}
+
+.positions__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.positions__table th {
+  text-align: left;
+  color: #6b7480;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-bottom: 1px solid #1f2733;
+}
+
+.positions__table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #161b22;
+}
+
+.is-long {
+  color: #1fae6b;
+}
+.is-short {
+  color: #e0524d;
+}
+.is-profit {
+  color: #1fae6b;
+}
+.is-loss {
+  color: #e0524d;
+}
+
+.positions__close {
+  background: transparent;
+  border: 1px solid #1f2733;
+  color: #d9dee3;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.positions__close:hover {
+  border-color: #4a90e2;
+}

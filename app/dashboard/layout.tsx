@@ -5,6 +5,7 @@ import { InternationalizedText } from "@/src/components/common/Internationalized
 import { LocaleSwitcher } from "@/src/components/common/LocaleSwitcher";
 import { ThemeToggle } from "@/src/components/layout/ThemeToggle";
 import { FeatureGate } from "@/src/components/resilience/ResilienceProvider";
+import { RpcEndpointIndicator } from "@/src/components/rpc/RpcEndpointIndicator";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
@@ -70,6 +71,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <InternationalizedText id="nav.devices" />
             </a>
             <LocaleSwitcher />
+            <RpcEndpointIndicator />
             <ThemeToggle />
           </div>
         </nav>

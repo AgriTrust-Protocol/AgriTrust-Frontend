@@ -1,0 +1,108 @@
+/* src/components/notifications/TxRecoveryBanner.css */
+.tx-recovery-banner {
+  background: #1a2230;
+  border: 1px solid #2c3a52;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #d9dee3;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.tx-recovery-banner__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.tx-recovery-banner__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.tx-recovery-banner__link {
+  background: transparent;
+  border: 0;
+  color: #4a90e2;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+}
+.tx-recovery-banner__link:hover {
+  text-decoration: underline;
+}
+
+.tx-recovery-banner__list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tx-recovery-banner__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #10151d;
+  border-radius: 6px;
+  padding: 8px 10px;
+  gap: 10px;
+}
+
+.tx-recovery-banner__item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.tx-recovery-banner__status {
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.tx-recovery-banner__status.is-confirmed {
+  color: #1fae6b;
+  background: rgba(31, 174, 107, 0.14);
+}
+.tx-recovery-banner__status.is-failed {
+  color: #e0524d;
+  background: rgba(224, 82, 77, 0.14);
+}
+.tx-recovery-banner__status.is-unknown,
+.tx-recovery-banner__status.is-pending_confirmation,
+.tx-recovery-banner__status.is-broadcasting {
+  color: #e0a94d;
+  background: rgba(224, 169, 77, 0.14);
+}
+
+.tx-recovery-banner__meta {
+  color: #8b93a1;
+}
+
+.tx-recovery-banner__hash {
+  font-family: ui-monospace, monospace;
+  color: #6b7480;
+}
+
+.tx-recovery-banner__item-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tx-recovery-banner__retry {
+  background: #2c3a52;
+  border: 0;
+  border-radius: 4px;
+  color: #d9dee3;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tx-recovery-banner__retry:hover {
+  background: #38496a;
+}
