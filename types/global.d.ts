@@ -22,6 +22,7 @@ interface LobstrProvider {
 interface EthereumProvider {
   isMetaMask?: boolean;
   isWalletConnect?: boolean;
+  isCoinbaseWallet?: boolean;
   selectedAddress?: string;
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
   on: (event: string, handler: (...args: unknown[]) => void) => void;
