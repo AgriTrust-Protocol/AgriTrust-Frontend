@@ -1,0 +1,44 @@
+/* src/components/trading/TradingTerminal.css */
+.terminal {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  grid-template-rows: 1fr auto;
+  gap: 8px;
+  height: 100vh;
+  padding: 8px;
+  background: #05070a;
+  box-sizing: border-box;
+}
+
+.terminal__main {
+  display: flex;
+  gap: 8px;
+  min-height: 0;
+}
+
+.terminal__main > *:first-child {
+  flex: 1;
+}
+
+.terminal__side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.terminal__bottom {
+  grid-column: 1 / -1;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .terminal {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .terminal__main {
+    flex-direction: column;
+  }
+}
