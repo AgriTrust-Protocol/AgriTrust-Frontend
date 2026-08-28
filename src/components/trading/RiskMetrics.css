@@ -1,0 +1,51 @@
+/* src/components/trading/RiskMetrics.css */
+.riskmetrics {
+  background: #0e1116;
+  border-radius: 8px;
+  padding: 12px;
+  color: #d9dee3;
+}
+
+.riskmetrics h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.riskmetrics__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 0;
+}
+
+.riskmetrics__grid dt {
+  font-size: 11px;
+  color: #6b7480;
+  margin-bottom: 2px;
+}
+
+.riskmetrics__grid dd {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.riskmetrics__sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: #6b7480;
+}
+
+.riskmetrics__leverage--low {
+  color: #1fae6b;
+}
+.riskmetrics__leverage--medium {
+  color: #e0a94d;
+}
+.riskmetrics__leverage--high {
+  color: #e0524d;
+}

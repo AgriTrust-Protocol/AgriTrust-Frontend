@@ -1,0 +1,119 @@
+/* src/components/trading/OrderPanel.css */
+.orderpanel {
+  background: #0e1116;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 240px;
+  color: #d9dee3;
+  position: relative;
+}
+
+.orderpanel__side-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.orderpanel__side {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #1f2733;
+  background: transparent;
+  color: #d9dee3;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.orderpanel__side kbd {
+  font-size: 10px;
+  opacity: 0.6;
+}
+.orderpanel__side--buy.is-active {
+  background: rgba(31, 174, 107, 0.16);
+  border-color: #1fae6b;
+  color: #1fae6b;
+}
+.orderpanel__side--sell.is-active {
+  background: rgba(224, 82, 77, 0.16);
+  border-color: #e0524d;
+  color: #e0524d;
+}
+
+.orderpanel__form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.orderpanel__field {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: #6b7480;
+  gap: 4px;
+}
+.orderpanel__field input,
+.orderpanel__field select {
+  background: #151a21;
+  border: 1px solid #1f2733;
+  border-radius: 6px;
+  padding: 8px;
+  color: #d9dee3;
+  font-size: 13px;
+}
+.orderpanel__field input:focus-visible,
+.orderpanel__field select:focus-visible {
+  outline: 2px solid #4a90e2;
+}
+
+.orderpanel__submit {
+  margin-top: 4px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+  color: #06110b;
+}
+.orderpanel__submit--buy {
+  background: #1fae6b;
+}
+.orderpanel__submit--sell {
+  background: #e0524d;
+  color: #150605;
+}
+.orderpanel__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.orderpanel__error {
+  font-size: 12px;
+  color: #e0524d;
+  margin: 0;
+}
+
+.orderpanel__toast {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.orderpanel__toast--ok {
+  background: rgba(31, 174, 107, 0.16);
+  color: #1fae6b;
+}
+.orderpanel__toast--error {
+  background: rgba(224, 82, 77, 0.16);
+  color: #e0524d;
+}

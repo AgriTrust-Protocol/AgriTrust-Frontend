@@ -1,0 +1,137 @@
+/* src/components/trading/OrderBook.css */
+.orderbook {
+  --ob-bid: #1fae6b;
+  --ob-ask: #e0524d;
+  --ob-bg: #0e1116;
+  --ob-row-bg: #151a21;
+  --ob-text: #d9dee3;
+  --ob-muted: #6b7480;
+
+  background: var(--ob-bg);
+  color: var(--ob-text);
+  font-variant-numeric: tabular-nums;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-width: 260px;
+}
+
+.orderbook__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.orderbook__header h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.orderbook__status {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.orderbook__status.is-live {
+  color: var(--ob-bid);
+  background: rgba(31, 174, 107, 0.12);
+}
+.orderbook__status.is-down {
+  color: var(--ob-ask);
+  background: rgba(224, 82, 77, 0.12);
+}
+
+.orderbook__columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  font-size: 11px;
+  color: var(--ob-muted);
+  padding: 0 8px 4px;
+}
+.orderbook__columns span:nth-child(2),
+.orderbook__columns span:nth-child(3) {
+  text-align: right;
+}
+
+.orderbook__asks,
+.orderbook__bids {
+  display: flex;
+  flex-direction: column;
+}
+
+.orderbook__spread {
+  text-align: center;
+  font-size: 11px;
+  color: var(--ob-muted);
+  padding: 6px 0;
+  border-top: 1px solid #1f2733;
+  border-bottom: 1px solid #1f2733;
+  margin: 2px 0;
+}
+
+.ob-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ob-text);
+  font-size: 12px;
+  padding: 2px 8px;
+  cursor: pointer;
+  text-align: right;
+}
+.ob-row:hover {
+  background: var(--ob-row-bg);
+}
+.ob-row:focus-visible {
+  outline: 2px solid #4a90e2;
+  outline-offset: -2px;
+}
+
+.ob-row__price {
+  text-align: left;
+  z-index: 1;
+}
+.ob-row--bid .ob-row__price {
+  color: var(--ob-bid);
+}
+.ob-row--ask .ob-row__price {
+  color: var(--ob-ask);
+}
+
+.ob-row__size,
+.ob-row__cumulative {
+  z-index: 1;
+  color: var(--ob-text);
+}
+
+.ob-row__depth {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+}
+.ob-row--bid .ob-row__depth {
+  background: rgba(31, 174, 107, 0.14);
+}
+.ob-row--ask .ob-row__depth {
+  background: rgba(224, 82, 77, 0.14);
+}
+
+.ob-row--best {
+  font-weight: 700;
+}
+.ob-row--best.ob-row--bid {
+  box-shadow: inset 3px 0 0 var(--ob-bid);
+}
+.ob-row--best.ob-row--ask {
+  box-shadow: inset 3px 0 0 var(--ob-ask);
+}
