@@ -1,0 +1,90 @@
+# AgriTrust Protocol — local development infrastructure.
+#
+# Brings up the three services the sovereignty portal talks to:
+#
+#   soroban-network  local Stellar/Soroban node (Freighter "Local Stellar" network)
+#   triplestore      Apache Jena Fuseki holding the :Process provenance graph
+#   compliance-api   EUDR due-diligence + verifiable credential issuer
+#
+# The portal degrades gracefully: with the triplestore and compliance API down it
+# falls back to the cached lineage snapshot in `src/lib/snapshot.ts`, which is
+# still verified against the Merkle root anchored on the ledger.
+
+name: agritrust
+
+services:
+  soroban-network:
+    image: stellar/quickstart:testing
+    container_name: agritrust-soroban
+    command: "--enable rpc,horizon"
+    ports:
+      - "8000:8000" # RPC
+      - "8080:8080" # Horizon
+    environment:
+      # Matches NETWORK_PASSPHRASE in src/lib/wallet.ts.
+      NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - agritrust
+
+  triplestore:
+    image: stain/jena-fuseki:4.8.0
+    container_name: agritrust-fuseki
+    # Read-only dataset loaded from ./infra/fuseki; re-run ./seed_fuseki.sh to
+    # reload the ontology and provenance statements.
+    command: >
+      --tdb2 --update /fuseki/databases/agritrust
+      --mem /fuseki
+    environment:
+      # Enables SPARQL Update so ./seed_fuseki.sh can load the ontology.
+      ADMIN_PASSWORD: agritrust-dev
+      JVM_ARGS: "-Xmx1g"
+    ports:
+      - "3030:3030" # SPARQL query endpoint
+      - "3031:3031" # SPARQL update endpoint
+    volumes:
+      - fuseki-data:/fuseki/databases/agritrust
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3030/$/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - agritrust
+
+  compliance-api:
+    build:
+      context: ./infra/compliance-api
+    container_name: agritrust-compliance-api
+    environment:
+      PORT: "8081"
+      # W3C VC issuer DID advertised by the EUDR attestation endpoint.
+      ISSUER_DID: "did:web:compliance.agritrust.org"
+      TRIPLESTORE_ENDPOINT: "http://triplestore:3030/agritrust/sparql"
+      SOROBAN_RPC_URL: "http://soroban-network:8000"
+    ports:
+      - "8081:8081"
+    depends_on:
+      triplestore:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    networks:
+      - agritrust
+
+volumes:
+  fuseki-data:
+
+networks:
+  agritrust:
+    driver: bridge
