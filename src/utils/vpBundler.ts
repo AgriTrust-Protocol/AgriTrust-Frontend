@@ -6,7 +6,7 @@ export interface VerifiablePresentationPayload {
   type: string[];
   holder: string;
   issuanceDate: string;
-  verifiableCredential: any[];
+  verifiableCredential: unknown[];
   provenanceGraph: {
     targetNodeId: string;
     subgraphDigest: string;
@@ -15,7 +15,7 @@ export interface VerifiablePresentationPayload {
       type: string;
       label: string;
       uri: string;
-      attributes: Record<string, any>;
+      attributes: Record<string, unknown>;
     }>;
     lineageEdges: Array<{
       id: string;
@@ -57,7 +57,7 @@ export async function createLineageVerifiablePresentation(
       type: (n.type as string) || 'unknown',
       label: (n.data?.label as string) || n.id,
       uri: (n.data?.uri as string) || `https://schema.agritrust.io/core#${n.id}`,
-      attributes: (n.data?.details as Record<string, any>) || {},
+      attributes: (n.data?.details as Record<string, unknown>) || {},
     }));
 
   const lineageEdges = allEdges
@@ -139,7 +139,7 @@ export async function createLineageVerifiablePresentation(
   return presentationPayload;
 }
 
-export function downloadJsonFile(filename: string, data: Record<string, any>): void {
+export function downloadJsonFile(filename: string, data: Record<string, unknown>): void {
   const jsonBlob = new Blob([JSON.stringify(data, null, 2)], {
     type: 'application/json',
   });
