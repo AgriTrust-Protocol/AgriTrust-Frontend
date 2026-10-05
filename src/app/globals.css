@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+/*
+ * AgriTrust Protocol portal theme.
+ *
+ * Tailwind v4 is configured CSS-first: the `@theme` block below defines the
+ * design tokens that generate the `bg-*` / `text-*` / `border-*` utilities used
+ * throughout the dashboard.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-surface-0: #070b0f;
+  --color-surface-1: #0c1218;
+  --color-surface-2: #121b23;
+  --color-surface-3: #1a2731;
+
+  --color-line: #1e2d38;
+  --color-line-strong: #2b3f4d;
+
+  --color-ink: #e6f0f5;
+  --color-ink-muted: #93a9b7;
+  --color-ink-faint: #64798a;
+
+  --color-leaf: #34d399;
+  --color-leaf-dim: #065f46;
+  --color-clay: #f59e0b;
+  --color-clay-dim: #78350f;
+  --color-sky: #38bdf8;
+  --color-sky-dim: #075985;
+  --color-rose: #fb7185;
+  --color-rose-dim: #881337;
+  --color-violet: #a78bfa;
+  --color-violet-dim: #4c1d95;
+
+  --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, monospace;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-surface-0);
+    color: var(--color-ink);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-leaf) 30%, transparent);
+  }
+
+  /* Focus ring for keyboard users on interactive controls. */
+  :focus-visible {
+    outline: 2px solid var(--color-sky);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Panel container shared by every dashboard card. */
+  .panel {
+    border-radius: 0.875rem;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface-1);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+    padding: 0.875rem 1.125rem;
+  }
+
+  /* Scrollable region for tabular ledger data. */
+  .thin-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+
+  .thin-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .thin-scroll::-webkit-scrollbar-thumb {
+    background-color: var(--color-line-strong);
+    border-radius: 999px;
+  }
+}
+
+/* React Flow ships its own stylesheet; these overrides align it to the theme. */
+.react-flow__attribution {
+  display: none;
+}
+
+.react-flow__handle {
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--color-surface-0);
+  background-color: var(--color-ink-faint);
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.react-flow__controls-button {
+  background-color: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-line);
+  color: var(--color-ink-muted);
+  fill: currentColor;
+}
+
+.react-flow__controls-button:hover {
+  background-color: var(--color-surface-3);
+}
+
+.react-flow__minimap {
+  background-color: var(--color-surface-1);
+}
