@@ -76,14 +76,14 @@ function decodeBase58(input: string): Uint8Array {
     const value = B58_ALPHABET.indexOf(char);
     if (value === -1) throw new Error(`Invalid Base58 character: ${char}`);
 
-    for (let j = 0; j < bytes.length; j++) bytes[j] *= 58;
-    bytes[0] += (value === undefined ? 0 : value);
+    for (let j = 0; j < bytes.length; j++) bytes[j] = (bytes[j] ?? 0) * 58;
+    bytes[0] = (bytes[0] ?? 0) + (value === undefined ? 0 : value);
 
     let carry = 0;
     for (let j = 0; j < bytes.length; j++) {
-      bytes[j] += carry;
-      carry = (bytes[j] as number) >> 8;
-      bytes[j] &= 0xff;
+      bytes[j] = (bytes[j] ?? 0) + carry;
+      carry = (bytes[j] ?? 0) >> 8;
+      bytes[j] = ((bytes[j] ?? 0) & 0xff);
     }
     while (carry > 0) {
       bytes.push(carry & 0xff);
@@ -184,7 +184,7 @@ export async function verifyAgriTrustVerifiablePresentation(
   const recomputedDigest = sha256Hex(canonicalGraphRepresentation);
   const cleanDocumentDigest = (provenanceGraph.subgraphDigest || '').replace(/^0x/, '').toLowerCase();
 
-  if (recomputedDigest.toLowerCase() === cleanDocumentDigest) {
+  const cleanDigest = cleanDocumentDigest || ''; if (recomputedDigest.toLowerCase() === cleanDigest) {
     digestValid = true;
   } else {
     errors.push(
@@ -193,12 +193,12 @@ export async function verifyAgriTrustVerifiablePresentation(
   }
 
   const expectedChallenge = sha256Hex(
-    `${presentation.id}:${presentation.issuanceDate}:${cleanDocumentDigest}`
+    `${presentation.id}:${presentation.issuanceDate}:${cleanDigest}`
   );
 
-  const proofSafe = proof as typeof proof; const cleanDocumentChallenge = proofSafe.challenge.replace(/^0x/, '').toLowerCase();
+  const proofSafe = proof as { challenge?: string }; const cleanDocumentChallenge = (proofSafe.challenge ?? '').replace(/^0x/, '').toLowerCase();
 
-  const cleanDocChallenge = cleanDocumentChallenge as string; if (expectedChallenge.toLowerCase() === cleanDocChallenge) {
+  const cleanDocChallenge = cleanDocumentChallenge || ''; if (expectedChallenge.toLowerCase() === cleanDocChallenge) {
     challengeValid = true;
   } else {
     errors.push(
@@ -233,7 +233,7 @@ export async function verifyAgriTrustVerifiablePresentation(
       }
     }
   } catch (err: unknown) {
-    errors.push(`Cryptographic key resolution failed: ${err.message}`);
+    errors.push(`Cryptographic key resolution failed: ${(err as Error).message}`);
   }
 
   const credentials = presentation.verifiableCredential || [];

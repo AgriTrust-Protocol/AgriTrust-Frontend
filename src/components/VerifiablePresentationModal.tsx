@@ -33,7 +33,7 @@ export default function VerifiablePresentationModal({
 
   const handleDownload = () => {
     const filename = `agritrust-vp-${vpPayload.provenanceGraph.targetNodeId}.json`;
-    downloadJsonFile(filename, vpPayload);
+    downloadJsonFile(filename, vpPayload as unknown as Record<string, unknown>);
   };
 
   return (
