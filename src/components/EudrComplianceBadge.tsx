@@ -170,10 +170,7 @@ export default function EudrComplianceBadge({ assessment }: EudrComplianceBadgeP
           {/* Plot overlay */}
           <div>
             <GeoJsonMiniMap
-              geoJson={assessment.geoJson}
-              center={assessment.centroid}
-              status={credential.status}
-              height={280}
+              geoJson={assessment.geoJson as any} height="280px"
             />
             <p className="mt-2 flex items-center gap-1.5 text-[11px] text-ink-faint">
               <MapPin className="size-3" aria-hidden="true" />
