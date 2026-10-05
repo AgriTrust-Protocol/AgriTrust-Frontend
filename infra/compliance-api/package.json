@@ -1,0 +1,14 @@
+{
+  "name": "agritrust-compliance-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EUDR due-diligence and W3C verifiable credential issuer for AgriTrust",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

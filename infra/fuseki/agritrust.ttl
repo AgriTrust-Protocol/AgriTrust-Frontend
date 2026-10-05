@@ -1,0 +1,201 @@
+# AgriTrust Protocol ontology (OWL / RDF).
+#
+# Classes and properties for the `:Process` provenance graph and the farmer
+# sovereignty layer. The predicates below are exactly those bound by the SPARQL
+# in src/lib/AgriTrustLineageService.ts, so a graph seeded against this ontology
+# is consumable by the portal without further mapping.
+
+@prefix agritrust: <https://agritrust.org/ontology#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix geo:      <http://www.opengis.net/ont/geosparql#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+
+# ---------------------------------------------------------------------------
+# Ontology header
+# ---------------------------------------------------------------------------
+
+<https://agritrust.org/ontology>
+    a owl:Ontology ;
+    rdfs:label "AgriTrust Protocol Ontology"@en ;
+    rdfs:comment """Semantic governance model for verifiable agri-food provenance:
+    a physical commodity batch is anchored on-ledger as an :Asset twin, its
+    lifecycle is described off-ledger as a :Process graph, and third-party
+    access to compliance records is licensed through executable ODRL policies
+    anchored as :DataContract agreements."""@en ;
+    owl:versionInfo "1.0.0" .
+
+# ---------------------------------------------------------------------------
+# Node classes
+# ---------------------------------------------------------------------------
+
+agritrust:CommodityBatch a owl:Class ;
+    rdfs:label "Commodity Batch"@en ;
+    rdfs:comment "A physical lot of an agricultural commodity, e.g. a coffee or soya consignment."@en .
+
+agritrust:Asset a owl:Class ;
+    rdfs:subClassOf agritrust:CommodityBatch ;
+    rdfs:label "Asset"@en ;
+    rdfs:comment "The digital twin of a physical batch, anchored on-ledger with a Merkle root over its provenance graph."@en .
+
+agritrust:Process a owl:Class ;
+    rdfs:label "Process"@en ;
+    rdfs:comment "A transformation applied to the batch, e.g. washing, hulling, grading or export handling."@en .
+
+agritrust:Observation a owl:Class ;
+    rdfs:label "Observation"@en ;
+    rdfs:comment "A measurement taken about the batch or plot, e.g. soil telemetry or satellite indices."@en .
+
+agritrust:Certificate a owl:Class ;
+    rdfs:label "Certificate"@en ;
+    rdfs:comment "A verifiable assertion about the batch, e.g. EUDR deforestation-free attestation or organic certification."@en .
+
+agritrust:LineageStatement a owl:Class ;
+    rdfs:label "Lineage Statement"@en ;
+    rdfs:comment "A directional, content-hashed edge connecting two provenance nodes."@en .
+
+agritrust:DataContract a owl:Class ;
+    rdfs:label "Data Contract"@en ;
+    rdfs:comment "An executable, revocable agreement licensing a named consumer access to an asset twin's compliance records."@en .
+
+agritrust:ODRLPolicy a owl:Class ;
+    rdfs:label "ODRL Policy"@en ;
+    rdfs:comment "A machine-readable usage policy anchored by digest so a data contract's terms are publicly auditable."@en .
+
+# ---------------------------------------------------------------------------
+# Batch anchoring
+# ---------------------------------------------------------------------------
+
+agritrust:assetCommitment a owl:DatatypeProperty ;
+    rdfs:label "asset commitment"@en ;
+    rdfs:comment "BytesN<32> commitment matching the physical batch, mirroring AssetTwinRecord.asset_id on Soroban."@en ;
+    rdfs:range xsd:hexBinary .
+
+agritrust:provenanceMerkleRoot a owl:DatatypeProperty ;
+    rdfs:label "provenance Merkle root"@en ;
+    rdfs:comment "Commitment over every :Process statement, mirroring AssetTwinRecord.provenance_merkle_root."@en ;
+    rdfs:range xsd:hexBinary .
+
+agritrust:rootNode a owl:ObjectProperty ;
+    rdfs:label "root node"@en ;
+    rdfs:comment "Entry point of the provenance traversal, normally the harvest :Asset."@en .
+
+agritrust:commodity a owl:DatatypeProperty ;
+    rdfs:label "commodity"@en ;
+    rdfs:comment "Commodity classification recorded on the twin, e.g. COFFEE, COCOA, SOYA."@en .
+
+# ---------------------------------------------------------------------------
+# Provenance statements
+# ---------------------------------------------------------------------------
+
+agritrust:contentHash a owl:DatatypeProperty ;
+    rdfs:label "content hash"@en ;
+    rdfs:comment "SHA-256 commitment of the node or statement; a Merkle leaf."@en ;
+    rdfs:range xsd:hexBinary .
+
+agritrust:recordedAt a owl:DatatypeProperty ;
+    rdfs:label "recorded at"@en ;
+    rdfs:comment "Instant the statement was made."@en ;
+    rdfs:range xsd:dateTime .
+
+agritrust:actor a owl:DatatypeProperty ;
+    rdfs:label "actor"@en ;
+    rdfs:comment "Entity responsible for the statement."@en .
+
+agritrust:quantityKilograms a owl:DatatypeProperty ;
+    rdfs:label "quantity (kg)"@en ;
+    rdfs:comment "Physical mass attributable to the statement, used for mass balance reconciliation."@en ;
+    rdfs:range xsd:decimal .
+
+agritrust:location a owl:DatatypeProperty ;
+    rdfs:label "location"@en ;
+    rdfs:comment "Human readable place the statement applies to."@en .
+
+agritrust:detail a owl:DatatypeProperty ;
+    rdfs:label "detail"@en ;
+    rdfs:comment "Free-text elaboration of the transformation or measurement."@en .
+
+agritrust:from a owl:ObjectProperty ;
+    rdfs:label "from"@en ;
+    rdfs:domain agritrust:LineageStatement ;
+    rdfs:range rdfs:Resource .
+
+agritrust:to a owl:ObjectProperty ;
+    rdfs:label "to"@en ;
+    rdfs:domain agritrust:LineageStatement ;
+    rdfs:range rdfs:Resource .
+
+agritrust:predicate a owl:ObjectProperty ;
+    rdfs:label "predicate"@en ;
+    rdfs:comment "The relation realised by a lineage statement."@en .
+
+# Edge relations. The portal renders one visual style per relation.
+agritrust:aggregatedInto a owl:ObjectProperty ; rdfs:label "aggregated into"@en .
+agritrust:transformedBy a owl:ObjectProperty ; rdfs:label "transformed by"@en .
+agritrust:producedBy   a owl:ObjectProperty ; rdfs:label "produced by"@en .
+agritrust:observedBy   a owl:ObjectProperty ; rdfs:label "observed by"@en .
+agritrust:certifiedBy  a owl:ObjectProperty ; rdfs:label "certified by"@en .
+
+# ---------------------------------------------------------------------------
+# EUDR compliance (Regulation (EU) 2023/1115)
+# ---------------------------------------------------------------------------
+
+agritrust:deforestationFree a owl:DatatypeProperty ;
+    rdfs:label "deforestation free"@en ;
+    rdfs:comment "Art. 10 evidence: no conversion of the plot to cropland after the 31 December 2020 cut-off."@en ;
+    rdfs:range xsd:boolean .
+
+agritrust:dueDiligenceStatement a owl:DatatypeProperty ;
+    rdfs:label "due diligence statement"@en ;
+    rdfs:comment "Reference to the operator's Article 10 due diligence statement."@en .
+
+agritrust:plotGeometry a owl:DatatypeProperty ;
+    rdfs:label "plot geometry"@en ;
+    rdfs:comment "RFC 7946 GeoJSON geometry for the geolocated production plot."@en .
+
+agritrust:cutOffDate a owl:DatatypeProperty ;
+    rdfs:label "cut-off date"@en ;
+    rdfs:comment "Deforestation assessment cut-off date applied to the plot."@en ;
+    rdfs:range xsd:date .
+
+# ---------------------------------------------------------------------------
+# Data sovereignty
+# ---------------------------------------------------------------------------
+
+agritrust:contractId a owl:DatatypeProperty ;
+    rdfs:label "contract identifier"@en ;
+    rdfs:comment "BytesN<32> identifier of a :DataContract, mirroring DataContractRecord.contract_id."@en ;
+    rdfs:range xsd:hexBinary .
+
+agritrust:dataConsumer a owl:ObjectProperty ;
+    rdfs:label "data consumer"@en ;
+    rdfs:comment "Entity licensed to read the batch's compliance records."@en .
+
+agritrust:odrlPolicyHash a owl:DatatypeProperty ;
+    rdfs:label "ODRL policy digest"@en ;
+    rdfs:comment "SHA-256 digest of the anchored ODRL terms; must resolve to an anchored :ODRLPolicy."@en ;
+    rdfs:range xsd:hexBinary .
+
+agritrust:policyUri a owl:DatatypeProperty ;
+    rdfs:label "policy URI"@en ;
+    rdfs:comment "Resolvable location of the ODRL offer or permission document."@en .
+
+agritrust:validUntilLedger a owl:DatatypeProperty ;
+    rdfs:label "valid until ledger"@en ;
+    rdfs:comment "Final ledger sequence at which the grant remains enforceable."@en ;
+    rdfs:range xsd:integer .
+
+agritrust:isRevoked a owl:DatatypeProperty ;
+    rdfs:label "revoked"@en ;
+    rdfs:comment "Set unilaterally by the farmer; revocation is terminal and irreversible."@en ;
+    rdfs:range xsd:boolean .
+
+agritrust:permitted a owl:ObjectProperty ;
+    rdfs:label "permitted action"@en ;
+    rdfs:comment "An ODRL permission asserted by an anchored policy."@en .
+
+agritrust:prohibited a owl:ObjectProperty ;
+    rdfs:label "prohibited action"@en ;
+    rdfs:comment "An ODRL prohibition asserted by an anchored policy."@en .
