@@ -170,7 +170,8 @@ export default function EudrComplianceBadge({ assessment }: EudrComplianceBadgeP
           {/* Plot overlay */}
           <div>
             <GeoJsonMiniMap
-              geoJson={assessment.geoJson as any} height="280px"
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            geoJson={assessment.geoJson as any} height="280px"
             />
             <p className="mt-2 flex items-center gap-1.5 text-[11px] text-ink-faint">
               <MapPin className="size-3" aria-hidden="true" />
